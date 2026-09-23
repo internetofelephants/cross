@@ -5,8 +5,6 @@ import { STRAY_DISTANCE } from '../types';
 
 interface GameHUDProps {
   day: number;
-  remainingInHerdWave: number;
-  activeFollowers: number;
   stamina: number;
   health: number; // Health parameter
   onTogglePause: () => void;
@@ -20,8 +18,6 @@ interface GameHUDProps {
 
 export default function GameHUD({
   day,
-  remainingInHerdWave,
-  activeFollowers,
   stamina,
   health,
   onTogglePause,
@@ -51,8 +47,6 @@ export default function GameHUD({
     playSelect();
   };
 
-  const activeHerdSize = remainingInHerdWave + activeFollowers + 1; // +1 for Alpha
-
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-4 font-sans select-none z-10">
       
@@ -62,16 +56,9 @@ export default function GameHUD({
         {/* Left Side: Stats Panel */}
         <div className="flex gap-2">
           <div className="bg-[#0d0d0d]/95 border border-[#2a2a2a] rounded-sm px-4 py-3 shadow-xl backdrop-blur-md flex gap-4 text-xs font-mono">
-            {/* Day and Wave remaining */}
             <div>
               <span className="text-[9px] text-[#c2a078] uppercase block tracking-widest font-semibold font-sans">Migration</span>
               <span className="text-lg font-display font-light text-[#e5e5e5]">Day {day}</span>
-            </div>
-            
-            {/* Active herd status */}
-            <div className="border-l border-[#2a2a2a] pl-4">
-              <span className="text-[9px] text-white/40 uppercase block tracking-widest font-semibold font-sans">Herd Pool</span>
-              <span className="text-lg font-display font-light text-[#e5e5e5]">{activeHerdSize}</span>
             </div>
           </div>
         </div>

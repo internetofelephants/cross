@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Sparkles, Navigation, Waves, Volume2, VolumeX } from 'lucide-react';
+import { Shield, Navigation, Waves, Volume2, VolumeX } from 'lucide-react';
 import { playSelect, toggleMute, getMuteStatus } from '../utils/audio';
 import CrossingMap from './CrossingMap';
 
@@ -41,21 +41,12 @@ export default function MainMenu({ onStartGame }: MainMenuProps) {
 
         {/* Title & Theme */}
         <div className="text-center space-y-3 mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[#c2a078]/10 text-[#c2a078] border border-[#c2a078]/20 text-[10px] font-sans tracking-[0.2em] uppercase mb-2">
-            <Sparkles className="w-3.5 h-3.5" />
-            Mara River Survival Engine
-          </div>
           <h1 className="font-display text-4xl md:text-5xl font-light tracking-widest text-[#c2a078] uppercase pb-1">
-            Mara River
+            Cross
           </h1>
           <p className="font-sans tracking-[0.3em] text-white/40 uppercase text-[10px]">
             The Great Wildebeest Migration
           </p>
-        </div>
-
-        {/* Migration map: ten crossings ahead */}
-        <div className="w-full mb-8 border border-[#2a2a2a] rounded-sm overflow-hidden">
-          <CrossingMap completed={0} />
         </div>
 
         {/* Story Intro */}
@@ -65,6 +56,11 @@ export default function MainMenu({ onStartGame }: MainMenuProps) {
           <span className="text-[#c2a078] font-light italic mt-3 block text-[13px] tracking-widest font-display">
             Steer your wildebeest through the melee and keep the cycle going.
           </span>
+        </div>
+
+        {/* Migration map: ten crossings ahead */}
+        <div className="w-full mb-8 border border-[#2a2a2a] rounded-sm overflow-hidden">
+          <CrossingMap completed={0} />
         </div>
 
         {/* Instructions Grid */}

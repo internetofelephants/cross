@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Waves, Play, RefreshCw } from 'lucide-react';
 import { playSelect } from '../utils/audio';
-import { GameStats } from '../types';
 import CrossingMap from './CrossingMap';
 
 interface DaySummaryProps {
-  stats: GameStats;
+  // The day about to be played; the day just finished is nextDay - 1.
+  nextDay: number;
   onNextWave: () => void;
   onResetGame: () => void;
 }
 
-export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummaryProps) {
+export default function DaySummary({ nextDay, onNextWave, onResetGame }: DaySummaryProps) {
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
   // Auto-cancel confirmation after 4 seconds
@@ -35,31 +35,25 @@ export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummar
         {/* Level Stats Summary */}
         <div className="text-center md:text-left md:flex justify-between items-end border-b border-[#2a2a2a] pb-6 mb-8 gap-4">
           <div>
-            <span className="text-[#c2a078] font-mono text-xs font-semibold tracking-widest uppercase">Day {stats.day - 1} Clearance</span>
+            <span className="text-[#c2a078] font-mono text-xs font-semibold tracking-widest uppercase">Day {nextDay - 1} Clearance</span>
             <h2 className="font-display text-2xl md:text-3xl font-light text-white uppercase tracking-wider mt-1">Migration Progress</h2>
           </div>
           <div className="flex bg-[#121212]/80 px-4 py-2 rounded-sm border border-[#2a2a2a] items-center gap-2 text-white/50 text-xs font-mono">
             <span>PREDATOR INTENSITY:</span>
-            <span className="text-red-400 font-bold">LEVEL {stats.day}</span>
+            <span className="text-red-400 font-bold">LEVEL {nextDay}</span>
           </div>
         </div>
 
         {/* Migration map: crossings done so far, next one pulsing */}
         <div className="w-full mb-8 border border-[#2a2a2a] rounded-sm overflow-hidden">
-          <CrossingMap completed={stats.day - 1} justCompleted={stats.day - 1} />
+          <CrossingMap completed={nextDay - 1} justCompleted={nextDay - 1} />
         </div>
 
-        {/* Stat cards row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div className="bg-[#121212] p-5 border border-[#2a2a2a] rounded-sm flex flex-col justify-center">
-            <span className="text-[10px] text-white/40 block uppercase font-mono tracking-wider">Awaiting Queue</span>
-            <span className="text-[#c2a078] font-mono text-2xl font-bold mt-1">{stats.herdTotal}</span>
-            <span className="text-[10px] text-white/30 block mt-1">wildebeests ready in the next crossing wave</span>
-          </div>
-
+        {/* Next day's conditions */}
+        <div className="mb-8">
           <div className="bg-[#121212] p-5 border border-[#2a2a2a] rounded-sm flex flex-col justify-center">
             <span className="text-[10px] text-white/40 block uppercase font-mono tracking-wider">Threat Intensity</span>
-            <span className="text-red-400 font-mono text-2xl font-bold mt-1">Day {stats.day} Conditions</span>
+            <span className="text-red-400 font-mono text-2xl font-bold mt-1">Day {nextDay} Conditions</span>
             <span className="text-[10px] text-white/30 block mt-1">crocodile speed and current velocity increased</span>
           </div>
         </div>
@@ -68,7 +62,7 @@ export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummar
         <div className="bg-[#121212] border border-[#2a2a2a] p-5 rounded-sm mb-8 space-y-4">
           <h3 className="font-display text-sm font-semibold text-[#c2a078] uppercase tracking-widest flex items-center gap-2">
             <Waves className="w-4 h-4 text-[#c2a078]" />
-            DAY {stats.day} RIVER ADVISORY BRIEFING
+            DAY {nextDay} RIVER ADVISORY BRIEFING
           </h3>
           <p className="text-white/50 text-xs leading-relaxed">
             As your migration group deeper penetrates the crossing bottlenecks of the Mara River, subsequent waves present stiffer challenges. Your instincts and skills are your sole defenses:
@@ -97,8 +91,6 @@ export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummar
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between border-t border-[#2a2a2a] pt-6">
           <div className="text-[11px] text-white/40 text-center sm:text-left leading-relaxed">
             Prepare to marshal the herd through tougher waters.
-            <br />
-            Total survivors in pool: <span className="text-white/80 font-bold font-mono">{stats.herdTotal}</span>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <button
@@ -125,7 +117,7 @@ export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummar
               onClick={handleStartNext}
               className="px-8 py-3 rounded-sm bg-[#c2a078] hover:bg-[#b08f68] font-sans text-xs font-semibold tracking-[0.18em] uppercase text-[#0a0a0a] cursor-pointer transition-all flex items-center justify-center gap-2 border-0"
             >
-              Begin Day {stats.day}
+              Begin Day {nextDay}
               <Play className="w-3.5 h-3.5 fill-[#0a0a0a]" />
             </button>
           </div>

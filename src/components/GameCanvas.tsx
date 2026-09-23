@@ -7,7 +7,6 @@ import {
   Rock, 
   Distraction, 
   GameParticle, 
-  GameStats,
   WildebeestState,
   STRAY_DISTANCE
 } from '../types';
@@ -26,10 +25,16 @@ import {
 import GameHUD from './GameHUD';
 import { Skull } from 'lucide-react';
 
+// River current rises evenly from Day 1 to Day 10. Day 10 matches the old Day 8 current, which was already
+// about as strong as the alpha can swim against.
+const currentRamp = (day: number) => (Math.min(10, Math.max(1, day)) - 1) / 9;
+const currentPush = (day: number) => 0.135 + currentRamp(day) * 0.245; // per-step downstream drift on swimmers
+const currentFlowSpeed = (day: number) => 0.51 + currentRamp(day) * 0.77; // drift of floating particles/bodies
+
 interface GameCanvasProps {
   day: number;
-  onWaveComplete: (crossedCount: number, lostCount: number) => void;
-  onGameOver: (crossed: number, lost: number) => void;
+  onWaveComplete: () => void;
+  onGameOver: () => void;
   onResetGame: () => void;
 }
 
@@ -43,23 +48,12 @@ export default function GameCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Core Game State
-  const [stats, setStats] = useState<GameStats>({
-    score: 0,
-    day: day,
-    herdTotal: 35 + day * 10, // Total remaining herd on left bank
-    herdActive: 0,
-    herdCrossed: 0,
-    herdLost: 0,
-  });
 
   const [activeHUD, setActiveHUD] = useState({
     stamina: 100,
     health: 100,
     stoneCooldown: 0,
     isSprinting: false,
-    crossedActive: 0,
-    lostActive: 0,
-    followersActiveCount: 0,
     isClimbingCliff: false,
     isCrowded: false,
     minHerdDistance: 0,
@@ -118,24 +112,9 @@ export default function GameCanvas({
     keys: {} as { [key: string]: boolean },
     
     // Day progress limits
-    waveTotalFollowersSpawning: 0,
-    waveCrossedCount: 0,
-    waveLostCount: 0,
     dayNumber: day,
     wildebeestsSpawnCount: 0,
   });
-
-  const incrementLostCount = () => {
-    const s = stateRef.current;
-    if (!s.currentWaveActive) return;
-    if (s.alphaWildebeest && s.alphaWildebeest.state === 'dead') return;
-    
-    s.waveLostCount++;
-    setStats(prev => ({
-      ...prev,
-      herdLost: prev.herdLost + 1,
-    }));
-  };
 
   // Initial Level Setup
   useEffect(() => {
@@ -157,9 +136,6 @@ export default function GameCanvas({
     setPendingDeathAction(null);
     
     // Configure settings based on Day/Level difficulty
-    s.waveTotalFollowersSpawning = 1;
-    s.waveCrossedCount = 0;
-    s.waveLostCount = 0;
     s.dayNumber = day;
 
     // 1. Spawning Lead Alpha
@@ -187,7 +163,6 @@ export default function GameCanvas({
 
     // 2. Spawn followers in immediate clustering simulating real stampede masses (moves from 13 to 40 on level 10)
     const numFollowersPerWave = 10 + (day * 3);
-    s.waveTotalFollowersSpawning = numFollowersPerWave;
     const followersList: Wildebeest[] = [];
     for (let i = 0; i < numFollowersPerWave; i++) {
       followersList.push({
@@ -438,7 +413,7 @@ export default function GameCanvas({
     }
 
     // Pre-populate natural current bubbles already floating in the river so the water feels alive instantly on start!
-    const baseCurrentSpeed = 0.4 + (day * 0.11);
+    const baseCurrentSpeed = currentFlowSpeed(day);
     for (let i = 0; i < 35; i++) {
       s.particles.push({
         id: `bubble-init-${i}-${Math.random()}`,
@@ -454,13 +429,6 @@ export default function GameCanvas({
       });
     }
 
-    // Keep state stats synced
-    setStats(prev => ({
-      ...prev,
-      day: day,
-      herdActive: s.followers.length,
-    }));
-
     syncActiveHUD();
   };
 
@@ -471,9 +439,6 @@ export default function GameCanvas({
       health: s.alphaWildebeest ? s.alphaWildebeest.health : 0,
       stoneCooldown: s.stoneCooldownTimer,
       isSprinting: !!s.keys['hopbutton'],
-      crossedActive: s.waveCrossedCount,
-      lostActive: s.waveLostCount,
-      followersActiveCount: s.followers.filter(f => f.state !== 'dead' && !f.completed).length,
       isClimbingCliff: s.alphaClimbingCliff,
       isCrowded: s.alphaWildebeest ? !!s.alphaWildebeest.isCrowded : false,
       minHerdDistance: s.minHerdDistance || 0,
@@ -714,7 +679,7 @@ export default function GameCanvas({
     const s = stateRef.current;
     
     // Water current speed scaling by day level
-    const currentSpeed = 0.4 + (s.dayNumber * 0.11);
+    const currentSpeed = currentFlowSpeed(s.dayNumber);
 
     // Update Floating Logs
     s.logs.forEach(log => {
@@ -797,7 +762,7 @@ export default function GameCanvas({
         }
       } else {
         // Drift downstream with the current flow!
-        const currentSpeed = 0.4 + (s.dayNumber * 0.11);
+        const currentSpeed = currentFlowSpeed(s.dayNumber);
         alpha.y += currentSpeed * 0.85; // gently float down with the current
         alpha.x += Math.sin(alpha.deathTimer * 0.05) * 0.15; // gentle swaying motion
         alpha.angle += 0.006; // slow rotate drift!
@@ -937,14 +902,6 @@ export default function GameCanvas({
       alpha.deathTimer = 0;
       createSplashParticles(alpha.x, alpha.y, 10, 2.0, '#315f8c');
 
-      s.waveLostCount++;
-      setStats(prev => {
-        return {
-          ...prev,
-          herdTotal: Math.max(0, prev.herdTotal - 1),
-          herdLost: prev.herdLost + 1,
-        };
-      });
 
       let cause = "Drowned from exhaustion: Your stamina depleted while swimming in the turbulent river, and you sank beneath the waves.";
       let title = "Drowned";
@@ -956,10 +913,8 @@ export default function GameCanvas({
         title = "Drowned";
       }
 
-      const crossedAtDeath = s.waveCrossedCount;
-      const lostAtDeath = s.waveLostCount;
       setPendingDeathAction(() => () => {
-        onGameOver(crossedAtDeath, lostAtDeath);
+        onGameOver();
       });
 
       // Pause two seconds before showing the death tile
@@ -1032,7 +987,7 @@ export default function GameCanvas({
 
     // River water flow force push downward (slowed down for realism)
     if (inRiver) {
-      alpha.vy += 0.10 + (s.dayNumber * 0.035); // river current force
+      alpha.vy += currentPush(s.dayNumber); // river current force
       alpha.state = 'swimming';
       
       // Bubbles trailing when swimming
@@ -1133,7 +1088,6 @@ export default function GameCanvas({
       }
 
       playCrossSuccess();
-      s.waveCrossedCount++;
       // Spawn standard peaceful decorations
       s.grazingHerd.push({
         id: `grazing-finish-${Date.now()}`,
@@ -1326,7 +1280,7 @@ export default function GameCanvas({
 
       // Water current downward drag (slowed down for realism)
       if (inRiver) {
-        f.vy += 0.10 + (s.dayNumber * 0.035);
+        f.vy += currentPush(s.dayNumber);
         f.state = 'swimming';
         if (Math.random() < 0.1) {
           createSplashParticles(f.x, f.y, 1, 0.4);
@@ -1372,7 +1326,6 @@ export default function GameCanvas({
         if (f.health <= 0) {
           f.state = 'dead';
           playChomp(); // drowning splash sound
-          incrementLostCount();
           createSplashParticles(f.x, f.y, 10, 1.8, '#315f8c'); // blue bubbling spray
         }
       }
@@ -1438,7 +1391,6 @@ export default function GameCanvas({
         // Crocodile eats them or swept downstream
         f.state = 'dead';
         playChomp();
-        incrementLostCount();
         createSplashParticles(f.x, 650, 6, 2.0, '#b30000');
       }
 
@@ -1461,7 +1413,6 @@ export default function GameCanvas({
         }
 
         playCrossSuccess();
-        s.waveCrossedCount++;
         
         // Spawn standard peaceful grazing decorations
         s.grazingHerd.push({
@@ -1669,7 +1620,7 @@ export default function GameCanvas({
       }
 
       if (inRiver && !w.onLogId) {
-        w.vy += 0.10 + (s.dayNumber * 0.035); // unified current drift across the river for everyone
+        w.vy += currentPush(s.dayNumber); // unified current drift across the river for everyone
         if (Math.random() < 0.08) {
           createSplashParticles(w.x, w.y, 1, 0.3);
         }
@@ -1759,7 +1710,6 @@ export default function GameCanvas({
           w.state = 'dead';
           createSplashParticles(w.x, w.y, 8, 1.5, '#315f8c');
           playChomp();
-          incrementLostCount();
         }
       }
 
@@ -1782,8 +1732,6 @@ export default function GameCanvas({
         }
 
         playCrossSuccess();
-        s.waveCrossedCount++;
-        setStats(prev => ({ ...prev, herdCrossed: prev.herdCrossed + 1 }));
 
         s.grazingHerd.push({
           id: `grazing-ambient-${Date.now()}-${Math.random()}`,
@@ -1863,18 +1811,9 @@ export default function GameCanvas({
             
             if (target.type === 'lead') {
               s.redFlashTimer = 40;
-              setStats(prev => ({
-                ...prev,
-                herdTotal: Math.max(0, prev.herdTotal - 1),
-                herdLost: prev.herdLost + 1,
-              }));
 
-              s.waveLostCount++;
-
-              const crossedAtDeath = s.waveCrossedCount;
-              const lostAtDeath = s.waveLostCount;
               setPendingDeathAction(() => () => {
-                onGameOver(crossedAtDeath, lostAtDeath);
+                onGameOver();
               });
 
               setTimeout(() => {
@@ -1882,9 +1821,6 @@ export default function GameCanvas({
                 setPlayerDeathMessage("Mauled by a lion: A territorial predator ambushed you on the grassy starting banks.");
                 setPlayerDeathTitle("Mauled");
               }, 1500);
-            } else {
-              // follower or ambient
-              incrementLostCount();
             }
           }
         }
@@ -2136,21 +2072,9 @@ export default function GameCanvas({
               c.sated = true;
               c.snapCooldown = 999999;
               s.killerCrocId = c.id;
-              
-              s.waveLostCount++;
 
-              setStats(prev => {
-                return {
-                  ...prev,
-                  herdTotal: Math.max(0, prev.herdTotal - 1),
-                  herdLost: prev.herdLost + 1,
-                };
-              });
-
-              const crossedAtDeath = s.waveCrossedCount;
-              const lostAtDeath = s.waveLostCount;
               setPendingDeathAction(() => () => {
-                onGameOver(crossedAtDeath, lostAtDeath);
+                onGameOver();
               });
 
               // Allow the crocodile to swim downstream with him for 3s, then show the death tile
@@ -2200,7 +2124,6 @@ export default function GameCanvas({
                   playChomp();
                   s.screenShake = 6;
                   f.state = 'dead';
-                  incrementLostCount();
                   createSplashParticles(f.x, f.y, 12, 2.2, '#aa0000');
                   
                   // Crocodile rests and eats
@@ -2243,8 +2166,6 @@ export default function GameCanvas({
                 c.state = 'eating';
                 c.sated = true;
                 c.snapCooldown = 999999;
-
-                incrementLostCount();
               } else {
                 playChomp();
                 createSplashParticles(w.x, w.y, 6, 1.4, '#aa0000');
@@ -2268,25 +2189,9 @@ export default function GameCanvas({
     // Single leader completes the level
     if (alpha && alpha.completed) {
       s.currentWaveActive = false;
-      
-      setStats(prev => {
-        return {
-          ...prev,
-          herdTotal: Math.max(0, prev.herdTotal - s.waveTotalFollowersSpawning),
-          herdCrossed: prev.herdCrossed + s.waveCrossedCount,
-        };
-      });
 
       // Show day summary screen / Next Wave Trigger after 1.5 seconds delay
-      setTimeout(() => {
-        const totalHerdLeft = stats.herdTotal - s.waveTotalFollowersSpawning;
-        
-        if (totalHerdLeft <= 0) {
-          onGameOver(s.waveCrossedCount, s.waveLostCount);
-        } else {
-          onWaveComplete(s.waveCrossedCount, s.waveLostCount);
-        }
-      }, 1500);
+      setTimeout(onWaveComplete, 1500);
     }
   };
 
@@ -3057,9 +2962,7 @@ export default function GameCanvas({
     >
       {/* HUD Panel overlaid on top of game */}
       <GameHUD
-        day={stats.day}
-        remainingInHerdWave={stats.herdTotal}
-        activeFollowers={activeHUD.followersActiveCount}
+        day={day}
         stamina={activeHUD.stamina}
         health={activeHUD.health}
         onTogglePause={() => {
@@ -3136,7 +3039,7 @@ export default function GameCanvas({
                 if (pendingDeathAction) {
                   pendingDeathAction();
                 } else {
-                  onGameOver(stateRef.current.waveCrossedCount, stateRef.current.waveLostCount);
+                  onGameOver();
                 }
               }}
               className="px-8 py-3.5 rounded-sm bg-[#a34d4d] hover:bg-[#b85b5b] font-sans text-xs font-semibold tracking-[0.2em] uppercase text-white shadow-md active:scale-[0.98] transition-all cursor-pointer inline-flex items-center justify-center gap-2 border-0"

@@ -101,12 +101,3 @@ export interface GameParticle {
   life: number;
   maxLife: number;
 }
-
-export interface GameStats {
-  score: number;
-  day: number;
-  herdTotal: number;       // Remaining herd to cross (e.g., 30)
-  herdActive: number;      // Current followers in level
-  herdCrossed: number;     // Total successfully crossed
-  herdLost: number;        // Total lost to crocodiles
-}
