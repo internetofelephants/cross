@@ -101,3 +101,6 @@ export interface GameParticle {
   life: number;
   maxLife: number;
 }
+
+// How the lead wildebeest died; shown on the game-over screen
+export type DeathCause = 'eaten' | 'washed' | 'trampled' | 'drowned';

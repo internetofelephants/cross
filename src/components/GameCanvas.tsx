@@ -8,6 +8,7 @@ import {
   Distraction, 
   GameParticle, 
   WildebeestState,
+  DeathCause,
   STRAY_DISTANCE
 } from '../types';
 import { 
@@ -34,7 +35,7 @@ const currentFlowSpeed = (day: number) => 0.51 + currentRamp(day) * 0.77; // dri
 interface GameCanvasProps {
   day: number;
   onWaveComplete: () => void;
-  onGameOver: () => void;
+  onGameOver: (cause: DeathCause) => void;
   onResetGame: () => void;
 }
 
@@ -68,19 +69,6 @@ export default function GameCanvas({
     alphaWildebeest: null as Wildebeest | null,
     followers: [] as Wildebeest[],
     ambientWildebeests: [] as Wildebeest[], // Other wildebeests crossing concurrently
-    lions: [] as {
-      id: string;
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      angle: number;
-      state: 'patrolling' | 'hunting';
-      patrolRangeY: [number, number];
-      size: number;
-      color: string;
-      aggroCooldown: number;
-    }[], // Lions patrolling on banks
     grazingHerd: [] as { x: number; y: number; id: string; size: number; color: string; animOffset: number }[],
     crocodiles: [] as Crocodile[],
     logs: [] as FloatingLog[],
@@ -90,6 +78,7 @@ export default function GameCanvas({
     
     // Physics variables
     currentWaveActive: false,
+    paused: false, // set while the help guide is open
     alphaExhausted: false,
     alphaClimbingCliff: false,
     stoneCooldownTimer: 0,
@@ -266,9 +255,6 @@ export default function GameCanvas({
     s.waveTimer = 0;
     s.killerCrocId = null;
     s.currentWaveActive = true;
-
-    // Spawn 0 patrolling Lions on the banks (disabled)
-    s.lions = [];
 
     // 4. Set persistent Rocks (Islands in River) - Turned off for realistic crossing
     s.rocks = [];
@@ -541,7 +527,7 @@ export default function GameCanvas({
     const simulationStep = () => {
       const s = stateRef.current;
 
-      if (!s.currentWaveActive) return;
+      if (!s.currentWaveActive || s.paused) return;
 
       // 1. UPDATE TIMERS & COOLDOWNS
       if (s.stoneCooldownTimer > 0) {
@@ -656,7 +642,6 @@ export default function GameCanvas({
 
       // 4. PREDEATOR PATROL & HUNT LOOP
       updatePredators();
-      updateLions();
 
       // 5. PROCESS COLLISION, BITES, RECOVERY
       processCollisions();
@@ -903,18 +888,21 @@ export default function GameCanvas({
       createSplashParticles(alpha.x, alpha.y, 10, 2.0, '#315f8c');
 
 
+      let deathCause: DeathCause = 'drowned';
       let cause = "Drowned from exhaustion: Your stamina depleted while swimming in the turbulent river, and you sank beneath the waves.";
       let title = "Drowned";
       if (alpha.y >= 645) {
+        deathCause = 'washed';
         cause = "Washed away down river: The powerful currents swept you downstream beyond the safe landing banks.";
         title = "Washed Away";
       } else if (alpha.isCrowded) {
+        deathCause = 'trampled';
         cause = "Trampled in the stampede: You got caught in the frantic crowd crush of the herd and drowned.";
-        title = "Drowned";
+        title = "Trampled";
       }
 
       setPendingDeathAction(() => () => {
-        onGameOver();
+        onGameOver(deathCause);
       });
 
       // Pause two seconds before showing the death tile
@@ -1747,100 +1735,6 @@ export default function GameCanvas({
     });
   };
 
-  const updateLions = () => {
-    const s = stateRef.current;
-    if (!s.currentWaveActive) return;
-
-    s.lions.forEach(lion => {
-      // Find nearest wildebeest in aggro range on the same bank
-      let target: Wildebeest | null = null;
-      let minDist = 130; // Chase range on the bank
-
-      // Candidate list of both followers and alpha!
-      const candidates: Wildebeest[] = [...s.followers, ...s.ambientWildebeests];
-      if (s.alphaWildebeest) candidates.push(s.alphaWildebeest);
-
-      candidates.forEach(w => {
-        if (w.state !== 'dead' && !w.completed) {
-          // Check if candidate is on the same bank
-          const sameBank = (lion.id === 'lion-left' && w.x < 220) || (lion.id === 'lion-right' && w.x > 980);
-          if (sameBank) {
-            const dist = Math.hypot(w.x - lion.x, w.y - lion.y);
-            if (dist < minDist) {
-              minDist = dist;
-              target = w;
-            }
-          }
-        }
-      });
-
-      if (target) {
-        lion.state = 'hunting';
-        // Steer towards target
-        const dx = target.x - lion.x;
-        const dy = target.y - lion.y;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist > 5) {
-          const runSpeed = 1.8;
-          lion.vx = (dx / dist) * runSpeed;
-          lion.vy = (dy / dist) * runSpeed;
-          lion.x += lion.vx;
-          lion.y += lion.vy;
-          lion.angle = Math.atan2(lion.vy, lion.vx);
-
-          // Pouncing particles/growl effects occasionally
-          if (Math.random() < 0.1) {
-            createSplashParticles(lion.x, lion.y, 1, 0.4, '#d4a359');
-          }
-        }
-
-        // Bite / contact and remove from herd on contact!
-        if (dist < 22 && lion.aggroCooldown <= 0) {
-          // Mauled!
-          playChomp();
-          s.screenShake = 12;
-          
-          target.health = Math.max(0, target.health - 60); // severe damage!
-          lion.aggroCooldown = 95; // brief pause to chew
-          
-          createSplashParticles(target.x, target.y, 12, 1.8, '#aa0000');
-
-          if (target.health <= 0) {
-            target.state = 'dead';
-            
-            if (target.type === 'lead') {
-              s.redFlashTimer = 40;
-
-              setPendingDeathAction(() => () => {
-                onGameOver();
-              });
-
-              setTimeout(() => {
-                s.currentWaveActive = false;
-                setPlayerDeathMessage("Mauled by a lion: A territorial predator ambushed you on the grassy starting banks.");
-                setPlayerDeathTitle("Mauled");
-              }, 1500);
-            }
-          }
-        }
-      } else {
-        lion.state = 'patrolling';
-        // Pacing up and down the bank boundaries
-        lion.y += lion.vy;
-        lion.angle = lion.vy > 0 ? Math.PI / 2 : -Math.PI / 2;
-
-        if (lion.y < lion.patrolRangeY[0]) {
-          lion.vy = Math.abs(lion.vy);
-        } else if (lion.y > lion.patrolRangeY[1]) {
-          lion.vy = -Math.abs(lion.vy);
-        }
-      }
-
-      if (lion.aggroCooldown > 0) lion.aggroCooldown--;
-    });
-  };
-
   const updatePredators = () => {
     const s = stateRef.current;
     
@@ -2074,7 +1968,7 @@ export default function GameCanvas({
               s.killerCrocId = c.id;
 
               setPendingDeathAction(() => () => {
-                onGameOver();
+                onGameOver('eaten');
               });
 
               // Allow the crocodile to swim downstream with him for 3s, then show the death tile
@@ -2484,81 +2378,11 @@ export default function GameCanvas({
       drawCrocodileSprite(ctx, c);
     });
 
-    // 10b. DRAW LIONS (THE APEX BANK HUNTERS)
-    s.lions.forEach(l => {
-      drawLionSprite(ctx, l);
-    });
-
     // 11. RED SCREEN FLASH ON BITING DAMAGE
     if (s.redFlashTimer > 0) {
       ctx.fillStyle = 'rgba(204, 0, 0, 0.28)';
       ctx.fillRect(0, 0, 1200, 675);
     }
-
-    ctx.restore();
-  };
-
-  const drawLionSprite = (ctx: CanvasRenderingContext2D, l: any) => {
-    ctx.save();
-    ctx.translate(l.x, l.y);
-    ctx.rotate(l.angle);
-
-    // Shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.24)';
-    ctx.beginPath();
-    ctx.ellipse(0, 4, l.size * 1.05, l.size * 0.72, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Body Torso
-    ctx.fillStyle = l.color;
-    ctx.beginPath();
-    ctx.ellipse(-3, 0, l.size * 0.95, l.size * 0.58, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Fluffy mane
-    ctx.fillStyle = '#4a2f13';
-    ctx.beginPath();
-    ctx.arc(l.size * 0.35, 0, l.size * 0.72, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Head
-    ctx.fillStyle = l.color;
-    ctx.beginPath();
-    ctx.arc(l.size * 0.6, 0, l.size * 0.38, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Ears
-    ctx.fillStyle = '#412910';
-    ctx.beginPath();
-    ctx.arc(l.size * 0.48, -l.size * 0.38, 3.5, 0, Math.PI * 2);
-    ctx.arc(l.size * 0.48, l.size * 0.38, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Angry eyes
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(l.size * 0.7, -l.size * 0.12, 1.8, 0, Math.PI * 2);
-    ctx.arc(l.size * 0.7, l.size * 0.12, 1.8, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#dd0000';
-    ctx.beginPath();
-    ctx.arc(l.size * 0.72, -l.size * 0.12, 0.9, 0, Math.PI * 2);
-    ctx.arc(l.size * 0.72, l.size * 0.12, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Swaying tail
-    ctx.strokeStyle = l.color;
-    ctx.lineWidth = 2.4;
-    ctx.beginPath();
-    ctx.moveTo(-l.size, 0);
-    ctx.quadraticCurveTo(-l.size * 1.35, Math.sin(Date.now() * 0.006) * 7, -l.size * 1.45, Math.sin(Date.now() * 0.006) * 11);
-    ctx.stroke();
-
-    ctx.fillStyle = '#412910';
-    ctx.beginPath();
-    ctx.arc(-l.size * 1.45, Math.sin(Date.now() * 0.006) * 11, 3.2, 0, Math.PI * 2);
-    ctx.fill();
 
     ctx.restore();
   };
@@ -2965,9 +2789,11 @@ export default function GameCanvas({
         day={day}
         stamina={activeHUD.stamina}
         health={activeHUD.health}
-        onTogglePause={() => {
+        onGuideToggle={(open) => {
           const s = stateRef.current;
-          s.currentWaveActive = !s.currentWaveActive;
+          s.paused = open;
+          // Drop held keys so the alpha doesn't keep swimming when play resumes
+          s.keys = {};
         }}
         onRestartWave={() => {
           playSelect();
@@ -3039,7 +2865,7 @@ export default function GameCanvas({
                 if (pendingDeathAction) {
                   pendingDeathAction();
                 } else {
-                  onGameOver();
+                  onGameOver('drowned');
                 }
               }}
               className="px-8 py-3.5 rounded-sm bg-[#a34d4d] hover:bg-[#b85b5b] font-sans text-xs font-semibold tracking-[0.2em] uppercase text-white shadow-md active:scale-[0.98] transition-all cursor-pointer inline-flex items-center justify-center gap-2 border-0"

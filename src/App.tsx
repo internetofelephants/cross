@@ -2,16 +2,16 @@ import React, { useState } from 'react';
 import MainMenu from './components/MainMenu';
 import GameCanvas from './components/GameCanvas';
 import DaySummary from './components/DaySummary';
+import { DeathCause } from './types';
 import GameOver from './components/GameOver';
-import DebugPanel, { DEBUG_MODE } from './components/DebugPanel';
 
 type ScreenState = 'menu' | 'playing' | 'summary' | 'gameover';
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('menu');
   const [day, setDay] = useState<number>(1);
-  // Bumped to force a fresh GameCanvas, e.g. when restarting the current day from the debug panel
-  const [runId, setRunId] = useState<number>(0);
+  // Set when the lead wildebeest dies; null after a win
+  const [deathCause, setDeathCause] = useState<DeathCause | null>(null);
 
   const handleStartGame = () => {
     setDay(1);
@@ -19,6 +19,7 @@ export default function App() {
   };
 
   const handleWaveComplete = () => {
+    setDeathCause(null);
     if (day >= 10) {
       setScreen('gameover');
     } else {
@@ -35,13 +36,14 @@ export default function App() {
     setScreen('playing');
   };
 
-  const handleGameOver = () => {
+  const handleGameOver = (cause: DeathCause) => {
+    setDeathCause(cause);
     setScreen('gameover');
   };
 
-  const handleDebugPlayDay = (debugDay: number) => {
-    setDay(debugDay);
-    setRunId(prev => prev + 1);
+  // Clicking a stone on the crossing map jumps straight to that crossing
+  const handlePlayCrossing = (crossing: number) => {
+    setDay(crossing);
     setScreen('playing');
   };
 
@@ -58,13 +60,12 @@ export default function App() {
     <div className="w-full h-full bg-[#0a0a0a] font-sans text-[#e5e5e5] flex flex-col justify-between overflow-x-hidden overflow-y-auto relative">
       <div className="flex-1 w-full h-full min-h-screen">
         {screen === 'menu' && (
-          <MainMenu onStartGame={handleStartGame} />
+          <MainMenu onStartGame={handleStartGame} onPlayCrossing={handlePlayCrossing} />
         )}
 
         {screen === 'playing' && (
           <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0a0a0a] p-2 md:p-6 pb-2">
             <GameCanvas
-              key={runId}
               day={day}
               onWaveComplete={handleWaveComplete}
               onGameOver={handleGameOver}
@@ -78,22 +79,20 @@ export default function App() {
             nextDay={day + 1}
             onNextWave={handleNextWave}
             onResetGame={handleResetGame}
+            onPlayCrossing={handlePlayCrossing}
           />
         )}
 
         {screen === 'gameover' && (
           <GameOver
             dayReached={day}
-            isVictory={day >= 10}
+            isVictory={day >= 10 && deathCause === null}
+            deathCause={deathCause}
             onRetryLevel={handleRetryLevel}
             onNewMigration={handleResetGame}
           />
         )}
       </div>
-
-      {DEBUG_MODE && (
-        <DebugPanel currentDay={day} isPlaying={screen === 'playing'} onPlayDay={handleDebugPlayDay} />
-      )}
     </div>
   );
 }

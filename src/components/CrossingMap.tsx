@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-// Top-down "stepping stones" map of the migration: one stone per day's crossing, with crocodiles
-// patrolling up and down the river. Used on the main menu and between days.
+// Top-down "stepping stones" map of the migration: one stone per crossing, with crocodiles
+// patrolling up and down the river. Used on the main menu and between crossings.
 
 const WIDTH = 680;
 const HEIGHT = 320;
@@ -64,8 +64,10 @@ interface Crossing {
 interface CrossingMapProps {
   // Number of crossings finished; the next one pulses as the current target.
   completed: number;
-  // Crossing (1-based) to celebrate with a pop-in check mark, e.g. the day just finished.
+  // Crossing (1-based) to celebrate with a pop-in check mark, e.g. the one just finished.
   justCompleted?: number;
+  // When given, every stone is clickable and plays that crossing (1-based).
+  onSelect?: (crossing: number) => void;
   className?: string;
 }
 
@@ -83,7 +85,7 @@ function pointAt(path: SVGPathElement, s: number) {
   return { x: p.x, y: p.y, nx: -ty / m, ny: tx / m, angle: (Math.atan2(ty, tx) * 180) / Math.PI };
 }
 
-export default function CrossingMap({ completed, justCompleted, className = '' }: CrossingMapProps) {
+export default function CrossingMap({ completed, justCompleted, onSelect, className = '' }: CrossingMapProps) {
   const pathRef = useRef<SVGPathElement>(null);
   const crocRefs = useRef<(SVGGElement | null)[]>([]);
   const [crossings, setCrossings] = useState<Crossing[]>([]);
@@ -135,14 +137,18 @@ export default function CrossingMap({ completed, justCompleted, className = '' }
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       className={`w-full h-auto block rounded-sm select-none ${className}`}
-      role="img"
-      aria-label={`Migration map: ${completed} of ${TOTAL_CROSSINGS} river crossings completed`}
+      role={onSelect ? 'group' : 'img'}
+      aria-label={`Crossing map: ${completed} of ${TOTAL_CROSSINGS} river crossings completed`}
     >
       <style>{`
         .cm-flow { animation: cm-flow 3s linear infinite; }
         @keyframes cm-flow { to { stroke-dashoffset: -42; } }
         .cm-pop { transform-box: fill-box; transform-origin: center; animation: cm-pop 700ms 300ms cubic-bezier(.34,1.56,.64,1) both; }
         @keyframes cm-pop { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .cm-pick { cursor: pointer; outline: none; }
+        .cm-pick .cm-rock { transition: filter 150ms; }
+        .cm-pick:hover .cm-rock, .cm-pick:focus-visible .cm-rock { filter: brightness(1.35); }
+        .cm-pick:focus-visible .cm-focus { opacity: 1; }
         @media (prefers-reduced-motion: reduce) { .cm-flow, .cm-pop { animation: none; } }
       `}</style>
 
@@ -195,8 +201,31 @@ export default function CrossingMap({ completed, justCompleted, className = '' }
         const lx = Math.max(40, Math.min(WIDTH - 40, p.x + p.nx * side * offset));
         const ly = Math.max(16, Math.min(HEIGHT - 20, p.y + p.ny * side * offset - 4));
         const celebrate = state === 'done' && justCompleted === i + 1;
+        const pick = onSelect
+          ? {
+              className: 'cm-pick',
+              role: 'button',
+              tabIndex: 0,
+              'aria-label': `Play crossing #${i + 1}`,
+              onClick: () => onSelect(i + 1),
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelect(i + 1);
+                }
+              },
+            }
+          : {};
         return (
-          <g key={i}>
+          <g key={i} {...pick}>
+            {onSelect && <title>{`Play crossing #${i + 1}`}</title>}
+            {onSelect && (
+              <>
+                {/* Invisible hit area, so a click near the stone still counts */}
+                <circle cx={p.x} cy={p.y} r={22} fill="transparent" />
+                <circle className="cm-focus" cx={p.x} cy={p.y} r={18} fill="none" stroke={C.gold} strokeWidth={1.5} opacity={0} />
+              </>
+            )}
             {state === 'current' && (
               <circle cx={p.x} cy={p.y} r={13} fill="none" stroke={C.gold} strokeWidth={2}>
                 <animate attributeName="r" values="13;22;13" dur="1.8s" repeatCount="indefinite" />
@@ -204,7 +233,7 @@ export default function CrossingMap({ completed, justCompleted, className = '' }
               </circle>
             )}
             <ellipse cx={p.x} cy={p.y + 2} rx={14} ry={12} fill={C.stoneShadow} opacity={0.7} />
-            <g className={celebrate ? 'cm-pop' : undefined}>
+            <g className={celebrate ? 'cm-pop cm-rock' : 'cm-rock'}>
               <ellipse
                 cx={p.x}
                 cy={p.y}
@@ -237,7 +266,7 @@ export default function CrossingMap({ completed, justCompleted, className = '' }
               )}
             </g>
             <text x={lx} y={ly} textAnchor="middle" fontSize={12} fontWeight={600} fill={state === 'todo' ? C.labelTodo : C.labelActive}>
-              Day {i + 1}
+              Crossing #{i + 1}
             </text>
             <text x={lx} y={ly + 13} textAnchor="middle" fontSize={11} fill={state === 'todo' ? C.nameTodo : C.nameActive}>
               {CROSSING_NAMES[i]}

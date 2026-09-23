@@ -37,3 +37,12 @@ html, body, #root {
 .animate-water-current {
   animation: slide-water 10s linear infinite;
 }
+
+/* Guide panel scrollbar: thin and dark to match the game */
+.guide-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
+.guide-scroll::-webkit-scrollbar { width: 6px; }
+.guide-scroll::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+.guide-scroll::-webkit-scrollbar-track { background: transparent; }

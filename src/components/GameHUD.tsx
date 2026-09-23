@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Sparkles, Navigation, Volume2, VolumeX, RotateCcw, RefreshCw, HelpCircle, Dumbbell, Zap, Heart } from 'lucide-react';
+import { Volume2, VolumeX, RotateCcw, RefreshCw, HelpCircle, Dumbbell, Zap, Heart } from 'lucide-react';
 import { toggleMute, getMuteStatus, playSelect } from '../utils/audio';
 import { STRAY_DISTANCE } from '../types';
+import GuideModal from './GuideModal';
 
 interface GameHUDProps {
   day: number;
   stamina: number;
   health: number; // Health parameter
-  onTogglePause: () => void;
+  onGuideToggle: (open: boolean) => void;
   onRestartWave: () => void;
   onResetGame: () => void;
   onSprintPressDown: () => void;
@@ -20,7 +21,7 @@ export default function GameHUD({
   day,
   stamina,
   health,
-  onTogglePause,
+  onGuideToggle,
   onRestartWave,
   onResetGame,
   onSprintPressDown,
@@ -29,7 +30,7 @@ export default function GameHUD({
   minHerdDistance,
 }: GameHUDProps) {
   const [muted, setMuted] = useState(getMuteStatus());
-  const [showHowTo, setShowHowTo] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
   // Auto-cancel confirmation after 4 seconds
@@ -39,6 +40,12 @@ export default function GameHUD({
       return () => clearTimeout(timer);
     }
   }, [isConfirmingReset]);
+
+  // The game pauses while the guide is open
+  const setGuide = (open: boolean) => {
+    setGuideOpen(open);
+    onGuideToggle(open);
+  };
 
   const handleMuteToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.currentTarget.blur();
@@ -57,27 +64,14 @@ export default function GameHUD({
         <div className="flex gap-2">
           <div className="bg-[#0d0d0d]/95 border border-[#2a2a2a] rounded-sm px-4 py-3 shadow-xl backdrop-blur-md flex gap-4 text-xs font-mono">
             <div>
-              <span className="text-[9px] text-[#c2a078] uppercase block tracking-widest font-semibold font-sans">Migration</span>
-              <span className="text-lg font-display font-light text-[#e5e5e5]">Day {day}</span>
+              <span className="text-[9px] text-[#c2a078] uppercase block tracking-widest font-semibold font-sans">Crossing</span>
+              <span className="text-lg font-display font-light text-[#e5e5e5]">#{day}</span>
             </div>
           </div>
         </div>
 
         {/* Right Side: Quick Action buttons */}
         <div className="flex gap-2">
-          {/* How to play icon */}
-          <button
-            onClick={(e) => { e.currentTarget.blur(); playSelect(); setShowHowTo(!showHowTo); }}
-            className={`p-2.5 rounded-sm border shadow-xl backdrop-blur-md transition-all cursor-pointer ${
-              showHowTo 
-                ? 'bg-[#c2a078] hover:bg-[#b08f68] border-[#c2a078] text-[#0a0a0a]' 
-                : 'bg-[#0d0d0d]/95 hover:bg-[#121212] border-[#2a2a2a] text-[#c2a078]'
-            }`}
-            title="How to Play"
-          >
-            <HelpCircle className="w-4 h-4" />
-          </button>
-
           {/* Restart */}
           <button
             onClick={(e) => { e.currentTarget.blur(); onRestartWave(); }}
@@ -87,7 +81,7 @@ export default function GameHUD({
             <RotateCcw className="w-4 h-4" />
           </button>
 
-          {/* Reset Everything (Start Over at Day 1) */}
+          {/* Reset Everything (Start Over at Crossing #1) */}
           <button
             onClick={(e) => {
               e.currentTarget.blur();
@@ -103,7 +97,7 @@ export default function GameHUD({
                 ? 'bg-red-950 hover:bg-red-900 border-red-700 text-red-200 animate-pulse px-3' 
                 : 'bg-[#0d0d0d]/95 hover:bg-[#121212] border-[#2a2a2a] text-red-400 hover:border-red-500/30'
             }`}
-            title={isConfirmingReset ? "Confirm Reset to Day 1" : "Reset Game & Start Over from Day 1"}
+            title={isConfirmingReset ? "Confirm Reset to Crossing #1" : "Reset Game & Start Over from Crossing #1"}
           >
             <RefreshCw className={`w-4 h-4 ${isConfirmingReset ? 'animate-spin' : ''}`} />
             {isConfirmingReset && <span className="text-[9px] font-bold font-mono tracking-wider">CONFIRM RESET?</span>}
@@ -117,38 +111,18 @@ export default function GameHUD({
           >
             {muted ? <VolumeX className="w-4 h-4 text-[#e5e5e5]/40" /> : <Volume2 className="w-4 h-4 text-[#c2a078]" />}
           </button>
-        </div>
-      </div>
 
-      {/* Middle instructions overlay, only when toggled */}
-      {showHowTo && (
-        <div className="self-center bg-[#0d0d0d]/95 border border-[#2a2a2a] p-6 rounded-sm max-w-sm pointer-events-auto shadow-2xl space-y-3 text-xs leading-relaxed text-white/60 select-text font-sans">
-          <h3 className="font-display font-light text-lg tracking-wider text-[#c2a078] flex items-center gap-1.5 border-b border-[#2a2a2a] pb-2">
-            <Sparkles className="w-4 h-4 text-[#c2a078]" />
-            MIGRATION STRATEGY
-          </h3>
-          <ul className="space-y-2.5 list-none text-white/60">
-            <li>
-              <span className="text-[#c2a078] font-medium block uppercase tracking-wider text-[10px] mb-0.5">Steering:</span>
-              Move with <span className="font-mono bg-[#0a0a0a] px-1 border border-[#2a2a2a] rounded-sm text-white/50">WASD</span>, <span className="font-mono bg-[#0a0a0a] px-1 border border-[#2a2a2a] rounded-sm text-white/50">Arrows</span>, or click <strong className="text-white/80">anywhere</strong> to swim towards safety exit mud channels on the right bank.
-            </li>
-            <li>
-              <span className="text-[#c2a078] font-medium block uppercase tracking-wider text-[10px] mb-0.5">Lunge Hop:</span>
-              Hold or tap <span className="font-mono bg-[#0a0a0a] px-1 border border-[#2a2a2a] rounded-sm text-white/50">SPACEBAR</span> or tap the button. Consumes <strong className="text-red-400">15% stamina</strong>, but pushes nearby animals back, breaking apart dangerous bottleneck stampedes and giving you distance!
-            </li>
-            <li>
-              <span className="text-[#c2a078] font-medium block uppercase tracking-wider text-[10px] mb-0.5">Stampedes & Predators:</span>
-              Getting crowded in tightly packed groups limits speed and inflicts trample damage. Crocodiles lie in waiting; their jaws snap wide only when attacking!
-            </li>
-          </ul>
+          {/* Help & information guide */}
           <button
-            onClick={() => { playSelect(); setShowHowTo(false); }}
-            className="w-full text-center py-2 bg-[#0a0a0a] hover:bg-[#121212] rounded-sm text-[#c2a078] font-semibold border border-[#2a2a2a] cursor-pointer text-[10px] uppercase tracking-widest mt-2"
+            id="hud-guide-btn"
+            onClick={(e) => { e.currentTarget.blur(); playSelect(); setGuide(true); }}
+            className="p-2.5 rounded-sm bg-[#0d0d0d]/95 hover:bg-[#121212] border border-[#2a2a2a] text-[#c2a078] hover:border-[#c2a078]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
+            title="Help & Information"
           >
-            Dismiss Guide
+            <HelpCircle className="w-4 h-4" />
           </button>
         </div>
-      )}
+      </div>
 
       {/* Centered Isolation Warning */}
       {minHerdDistance > STRAY_DISTANCE && minHerdDistance < 1200 && (
@@ -234,6 +208,8 @@ export default function GameHUD({
           </button>
         </div>
       </div>
+
+      <GuideModal isOpen={guideOpen} originId="hud-guide-btn" onClose={() => setGuide(false)} />
     </div>
   );
 }
