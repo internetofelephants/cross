@@ -1,0 +1,6 @@
+{
+  "name": "Mara River Wildebeest Crossing",
+  "description": "A survival and strategy game about guiding a wildebeest herd safely across the crocodile-infested Mara River.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
