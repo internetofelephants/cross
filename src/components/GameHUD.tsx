@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Sparkles, Navigation, Volume2, VolumeX, RotateCcw, RefreshCw, HelpCircle, Dumbbell, Zap, Heart } from 'lucide-react';
 import { toggleMute, getMuteStatus, playSelect } from '../utils/audio';
+import { STRAY_DISTANCE } from '../types';
 
 interface GameHUDProps {
   day: number;
@@ -146,7 +147,7 @@ export default function GameHUD({
             </li>
             <li>
               <span className="text-[#c2a078] font-medium block uppercase tracking-wider text-[10px] mb-0.5">Lunge Hop:</span>
-              Hold or tap <span className="font-mono bg-[#0a0a0a] px-1 border border-[#2a2a2a] rounded-sm text-white/50">SPACEBAR</span> or tap the button. Consumes <strong className="text-red-400">22% stamina</strong>, but pushes nearby animals back, breaking apart dangerous bottleneck stampedes and giving you distance!
+              Hold or tap <span className="font-mono bg-[#0a0a0a] px-1 border border-[#2a2a2a] rounded-sm text-white/50">SPACEBAR</span> or tap the button. Consumes <strong className="text-red-400">15% stamina</strong>, but pushes nearby animals back, breaking apart dangerous bottleneck stampedes and giving you distance!
             </li>
             <li>
               <span className="text-[#c2a078] font-medium block uppercase tracking-wider text-[10px] mb-0.5">Stampedes & Predators:</span>
@@ -163,7 +164,7 @@ export default function GameHUD({
       )}
 
       {/* Centered Isolation Warning */}
-      {minHerdDistance > 135 && minHerdDistance < 1200 && (
+      {minHerdDistance > STRAY_DISTANCE && minHerdDistance < 1200 && (
         <div className="self-center bg-amber-950/95 border border-red-600/60 text-[#ffa3a3] px-5 py-2.5 rounded-sm shadow-2xl backdrop-blur-md animate-pulse flex items-center gap-1.5 mb-2 pointer-events-auto max-w-[420px] text-center font-mono">
           <span className="text-xs font-bold uppercase tracking-widest text-[#fca3a3] leading-tight">
             ⚠️ ISOLATED FROM THE HERD!<br/>
@@ -231,8 +232,10 @@ export default function GameHUD({
           <button
             onMouseDown={onSprintPressDown}
             onMouseUp={onSprintPressUp}
+            onMouseLeave={onSprintPressUp}
             onTouchStart={(e) => { e.preventDefault(); onSprintPressDown(); }}
             onTouchEnd={(e) => { e.preventDefault(); onSprintPressUp(); }}
+            onTouchCancel={onSprintPressUp}
             className={`px-5 py-2.5 rounded-sm font-sans text-[10px] font-semibold tracking-widest uppercase transition-all flex items-center gap-1.5 cursor-pointer border-0 select-none ${
               isSprinting
                 ? 'bg-[#c2a078] text-[#0a0a0a] scale-[0.97]'

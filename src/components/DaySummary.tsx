@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Waves, Sparkles, Navigation, Shield, Zap, CircleDot, Play, RefreshCw, Skull, CheckCircle } from 'lucide-react';
+import { Waves, Play, RefreshCw } from 'lucide-react';
 import { playSelect } from '../utils/audio';
 import { GameStats } from '../types';
 
-interface UpgradeMenuProps {
+interface DaySummaryProps {
   stats: GameStats;
   onNextWave: () => void;
   onResetGame: () => void;
 }
 
-export default function UpgradeMenu({ stats, onNextWave, onResetGame }: UpgradeMenuProps) {
+export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummaryProps) {
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
   // Auto-cancel confirmation after 4 seconds

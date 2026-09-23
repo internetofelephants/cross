@@ -7,9 +7,9 @@ import {
   Rock, 
   Distraction, 
   GameParticle, 
-  Upgrades, 
   GameStats,
-  WildebeestState 
+  WildebeestState,
+  STRAY_DISTANCE
 } from '../types';
 import { 
   playSplash, 
@@ -28,19 +28,15 @@ import { Skull } from 'lucide-react';
 
 interface GameCanvasProps {
   day: number;
-  upgrades: Upgrades;
   onWaveComplete: (crossedCount: number, lostCount: number) => void;
   onGameOver: (crossed: number, lost: number) => void;
-  initialGoldCorms: number;
   onResetGame: () => void;
 }
 
 export default function GameCanvas({
   day,
-  upgrades,
   onWaveComplete,
   onGameOver,
-  initialGoldCorms,
   onResetGame
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -49,7 +45,6 @@ export default function GameCanvas({
   // Core Game State
   const [stats, setStats] = useState<GameStats>({
     score: 0,
-    goldCorms: initialGoldCorms,
     day: day,
     herdTotal: 35 + day * 10, // Total remaining herd on left bank
     herdActive: 0,
@@ -126,16 +121,9 @@ export default function GameCanvas({
     waveTotalFollowersSpawning: 0,
     waveCrossedCount: 0,
     waveLostCount: 0,
-    goldCormsEarned: initialGoldCorms,
     dayNumber: day,
     wildebeestsSpawnCount: 0,
   });
-
-  // Keep upgrades in ref so loop always has up-to-date upgrade values
-  const upgradesRef = useRef(upgrades);
-  useEffect(() => {
-    upgradesRef.current = upgrades;
-  }, [upgrades]);
 
   const incrementLostCount = () => {
     const s = stateRef.current;
@@ -318,18 +306,18 @@ export default function GameCanvas({
     
     // Graded crocodile level count progression for gradual difficulty ramp up to 10 levels
     let numLaneCrocs = 1;
-    let numStalkers = 0;
+    let numStalkers = 1;
     let numSleepers = 2;
 
     switch (day) {
       case 1:
-        numLaneCrocs = 1; numStalkers = 0; numSleepers = 2;
-        break;
-      case 2:
         numLaneCrocs = 1; numStalkers = 1; numSleepers = 2;
         break;
+      case 2:
+        numLaneCrocs = 1; numStalkers = 2; numSleepers = 2;
+        break;
       case 3:
-        numLaneCrocs = 2; numStalkers = 1; numSleepers = 3;
+        numLaneCrocs = 2; numStalkers = 2; numSleepers = 3;
         break;
       case 4:
         numLaneCrocs = 2; numStalkers = 2; numSleepers = 3;
@@ -471,7 +459,6 @@ export default function GameCanvas({
       ...prev,
       day: day,
       herdActive: s.followers.length,
-      goldCorms: prev.goldCorms,
     }));
 
     syncActiveHUD();
@@ -483,7 +470,7 @@ export default function GameCanvas({
       stamina: s.alphaWildebeest ? s.alphaWildebeest.stamina : 0,
       health: s.alphaWildebeest ? s.alphaWildebeest.health : 0,
       stoneCooldown: s.stoneCooldownTimer,
-      isSprinting: s.alphaWildebeest ? s.alphaWildebeest.isDashing : false,
+      isSprinting: !!s.keys['hopbutton'],
       crossedActive: s.waveCrossedCount,
       lostActive: s.waveLostCount,
       followersActiveCount: s.followers.filter(f => f.state !== 'dead' && !f.completed).length,
@@ -562,19 +549,34 @@ export default function GameCanvas({
   };
 
   // Main game physics and rendering tick
+  // All speeds, timers and cooldowns are tuned in per-step units at 60 steps/second, so the
+  // simulation runs on a fixed timestep and renders once per animation frame. This keeps game
+  // speed identical on 60Hz, 120Hz and other refresh rates.
   useEffect(() => {
     let animFrameId = 0;
+    const STEP_MS = 1000 / 60;
+    const MAX_FRAME_MS = 250; // avoid a burst of catch-up steps after the tab was hidden
+    let lastTime: number | null = null;
+    let accumulator = 0;
 
-    const gameTick = () => {
-      const s = stateRef.current;
-      const up = upgradesRef.current;
-      
-      if (!s.currentWaveActive) {
-        // Simple graphics tick even when paused
-        drawGameOnly();
-        animFrameId = requestAnimationFrame(gameTick);
-        return;
+    const gameTick = (now: number) => {
+      if (lastTime === null) lastTime = now;
+      accumulator += Math.min(now - lastTime, MAX_FRAME_MS);
+      lastTime = now;
+
+      while (accumulator >= STEP_MS) {
+        simulationStep();
+        accumulator -= STEP_MS;
       }
+
+      drawGameOnly();
+      animFrameId = requestAnimationFrame(gameTick);
+    };
+
+    const simulationStep = () => {
+      const s = stateRef.current;
+
+      if (!s.currentWaveActive) return;
 
       // 1. UPDATE TIMERS & COOLDOWNS
       if (s.stoneCooldownTimer > 0) {
@@ -680,32 +682,27 @@ export default function GameCanvas({
 
       // 2. ALPHA LEADER CONTROL
       if (s.alphaWildebeest) {
-        updateAlphaLeader(up);
+        updateAlphaLeader();
       }
 
       // 3. FLOCKING / BOIDS FOLLOWERS CONTROLLER
-      updateFollowerHerd(up);
-      updateAmbientWildebeests(up);
+      updateFollowerHerd();
+      updateAmbientWildebeests();
 
       // 4. PREDEATOR PATROL & HUNT LOOP
       updatePredators();
       updateLions();
 
       // 5. PROCESS COLLISION, BITES, RECOVERY
-      processCollisions(up);
+      processCollisions();
 
-      // 6. DRAW GAME BOARD
-      drawGameOnly();
-
-      // 7. CHECK WIN / LOSS STATUS FOR ACTIVE BATCH
+      // 6. CHECK WIN / LOSS STATUS FOR ACTIVE BATCH
       evaluateWaveProgress();
 
-      // Tick HUD frequently but not necessarily every single frame to prevent react throttling
+      // Tick HUD frequently but not necessarily every single step to prevent react throttling
       if (Math.random() < 0.1) {
         syncActiveHUD();
       }
-
-      animFrameId = requestAnimationFrame(gameTick);
     };
 
     animFrameId = requestAnimationFrame(gameTick);
@@ -785,7 +782,7 @@ export default function GameCanvas({
     }
   };
 
-  const updateAlphaLeader = (up: Upgrades) => {
+  const updateAlphaLeader = () => {
     const s = stateRef.current;
     const alpha = s.alphaWildebeest!;
 
@@ -821,8 +818,7 @@ export default function GameCanvas({
     if (alpha.hopCooldown && alpha.hopCooldown > 0) alpha.hopCooldown--;
 
     // Determine target speed base 
-    const baseSpeedMultiplier = 1 + (up.leaderSpeed * 0.12);
-    let speed = 0.82 * baseSpeedMultiplier; // faster, ultra responsive leader speed
+    let speed = 0.82; // faster, ultra responsive leader speed
 
     // Calculate Crowding / Stampede Stuck condition - requires a larger bottleneck group
     let crowdingCount = 0;
@@ -841,14 +837,14 @@ export default function GameCanvas({
     if (alpha.isCrowded) {
       speed *= 0.70; // gently slowed in stampede masses (was 0.40)
       // Trampled by herd health decay: significantly reduced to keep it balanced and fair
-      alpha.health = Math.max(0, alpha.health - 0.02);
+      alpha.health = Math.max(0, alpha.health - 0.05);
       if (Math.random() < 0.1) {
         createSplashParticles(alpha.x, alpha.y, 2, 0.6, '#382a1d');
       }
     }
 
     // Handle keypress Hop triggers
-    const isWantingHop = s.keys[' '] || s.keys['spacebar'] || s.keys['space'] || activeHUD.isSprinting;
+    const isWantingHop = s.keys[' '] || s.keys['spacebar'] || s.keys['space'] || s.keys['hopbutton'];
     
     // Check if swimming
     const inRiver = alpha.x > 220 && alpha.x < 980;
@@ -860,11 +856,6 @@ export default function GameCanvas({
       alpha.stamina = Math.max(0, alpha.stamina - 15); // lowered from 22% for better crossing balance
       playSplash(); // plays jump splash sound
       createSplashParticles(alpha.x, alpha.y, 8, 1.8);
-      
-      // Clear activeHUD helper trigger if clicked touch button
-      if (activeHUD.isSprinting) {
-         setActiveHUD(prev => ({ ...prev, isSprinting: false }));
-      }
     }
 
     // Handle Hop movement boost and push nearby herd away for separation
@@ -940,7 +931,7 @@ export default function GameCanvas({
       }
     }
 
-    if (alpha.health <= 0 && alpha.state !== 'dead') {
+    if (alpha.health <= 0) {
       // Alpha drowned / washed away / trampled!
       alpha.state = 'dead';
       alpha.deathTimer = 0;
@@ -1158,7 +1149,7 @@ export default function GameCanvas({
     }
   };
 
-  const updateFollowerHerd = (up: Upgrades) => {
+  const updateFollowerHerd = () => {
     const s = stateRef.current;
     
     // Create a high-performance single flat list of active, living, uncompleted wildebeests
@@ -1300,7 +1291,7 @@ export default function GameCanvas({
       }
 
       // Follower Speed configuration - aligned with leader speed for cohesive herd behavior
-      let moveSpeed = 0.74 + (up.leaderSpeed * 0.08);
+      let moveSpeed = 0.74;
       if (f.isCrowded) {
         moveSpeed *= 0.70; // gently slowed down in stampede clumps
       }
@@ -1487,7 +1478,7 @@ export default function GameCanvas({
     });
   };
 
-  const updateAmbientWildebeests = (up: Upgrades) => {
+  const updateAmbientWildebeests = () => {
     const s = stateRef.current;
     if (!s.currentWaveActive) return;
 
@@ -1947,7 +1938,7 @@ export default function GameCanvas({
         const potentialPrey = [...s.followers, ...s.ambientWildebeests];
         if (s.alphaWildebeest) potentialPrey.push(s.alphaWildebeest);
         for (let prey of potentialPrey) {
-          if (prey.state === 'swimming' && prey.state !== 'dead' && !prey.completed) {
+          if (prey.state === 'swimming' && !prey.completed) {
             const d = Math.hypot(prey.x - c.x, prey.y - c.y);
             if (d < 95) {
               nearbyTarget = true;
@@ -1969,9 +1960,9 @@ export default function GameCanvas({
 
         // Get all living swimming herd members (including followers and ambient) to compute groupings correctly
         const swimmingHerd = [...s.followers, ...s.ambientWildebeests].filter(
-          h => h.state === 'swimming' && h.state !== 'dead' && !h.completed
+          h => h.state === 'swimming' && !h.completed
         );
-        if (lead && lead.state === 'swimming' && lead.state !== 'dead' && !lead.completed) {
+        if (lead && lead.state === 'swimming' && !lead.completed) {
           swimmingHerd.push(lead);
         }
 
@@ -1987,16 +1978,16 @@ export default function GameCanvas({
               }
             }
           }
-          return minNeighborDist > 110;
+          return minNeighborDist > STRAY_DISTANCE;
         };
 
         // Find nearest swimming wildebeest to pursue based on stray status and proximity
         let target: Wildebeest | null = null;
         let bestDist = 9999;
 
-        // Candidates include player and followers
-        const candidates: Wildebeest[] = [...s.followers];
-        if (lead && lead.state === 'swimming' && lead.state !== 'dead' && !lead.completed) {
+        // Candidates include player and followers, but only while they are in the water
+        const candidates: Wildebeest[] = s.followers.filter(f => f.state === 'swimming' && !f.completed);
+        if (lead && lead.state === 'swimming' && !lead.completed) {
           candidates.push(lead);
         }
 
@@ -2022,7 +2013,7 @@ export default function GameCanvas({
           let chaseSpeed = 0.40 + (s.dayNumber * 0.04);
           // If hunting an isolated target, crocodiles speed up slightly, but stay highly escapeable
           if (getIsStray(target)) {
-            chaseSpeed *= 1.35; // balanced multiplier for escapeability (down from 2.95!)
+            chaseSpeed *= 1.6; // outpaces an isolated alpha's normal swim; hop or rejoin the herd to escape
           }
           c.vx = (dx / dist) * chaseSpeed;
           c.vy = (dy / dist) * chaseSpeed;
@@ -2079,9 +2070,16 @@ export default function GameCanvas({
         }
       }
     });
+
+    // Keep every crocodile's whole body inside the river channel (x 220-980), never on the banks.
+    // The sprite reaches ~1.6x size along its body and ~0.45x size across it, so the margin depends on facing.
+    s.crocodiles.forEach(c => {
+      const halfWidth = c.size * (1.6 * Math.abs(Math.cos(c.angle)) + 0.45 * Math.abs(Math.sin(c.angle)));
+      c.x = Math.max(220 + halfWidth, Math.min(980 - halfWidth, c.x));
+    });
   };
 
-  const processCollisions = (up: Upgrades) => {
+  const processCollisions = () => {
     const s = stateRef.current;
     
     // Safety check objects (Logs, Rocks)
@@ -2112,7 +2110,7 @@ export default function GameCanvas({
 
       // A. Collision with Alpha Leader?
       const lead = s.alphaWildebeest!;
-      if (!biteHappened && lead && lead.state === 'swimming' && lead.state !== 'dead' && !lead.completed && !lead.onLogId) {
+      if (!biteHappened && lead && lead.state === 'swimming' && !lead.completed && !lead.onLogId) {
         const d = Math.hypot(lead.x - c.x, lead.y - c.y);
         if (d < 28) {
           biteHappened = true;
@@ -2122,16 +2120,9 @@ export default function GameCanvas({
             createSplashParticles(lead.x, lead.y, 8, 1.5, '#ffd700'); // beautiful spray
             lead.x = Math.min(1010, lead.x + 35); // hurdle past the crocodile!
             c.snapCooldown = Math.max(25, 75 - s.dayNumber * 5); // briefly confuses the croc
-          } else if (up.hornDefense > 0 && lead.isDashing) {
-            // Defend! Stun crocodile charge headbutt!
-            playCrocStun();
-            s.screenShake = 12;
-            c.snapCooldown = Math.max(120, 310 - s.dayNumber * 20); // stun croc for ~4.5 seconds
-            c.jawAngle = -0.35; // reverse upside down mouth
-            createSplashParticles(c.x, c.y, 10, 2.5, '#ffd700'); // gold stun sparkles
           } else {
             // Apply health damage to Alpha instead of instant death
-            const dmg = 45 * (1 - up.thickHides * 0.18);
+            const dmg = 45;
             lead.health = Math.max(0, lead.health - dmg);
 
             if (lead.health <= 0) {
@@ -2189,7 +2180,7 @@ export default function GameCanvas({
       if (!biteHappened) {
         s.followers.forEach(f => {
           if (biteHappened) return;
-          if (f.state === 'swimming' && f.state !== 'dead' && !f.completed && !f.onLogId) {
+          if (f.state === 'swimming' && !f.completed && !f.onLogId) {
             const d = Math.hypot(f.x - c.x, f.y - c.y);
             if (d < 25) {
               biteHappened = true;
@@ -2201,7 +2192,7 @@ export default function GameCanvas({
                 c.snapCooldown = Math.max(20, 50 - s.dayNumber * 3);
               } else {
                 // Apply health damage to followers instead of instant death
-                const dmg = 50 * (1 - up.thickHides * 0.18);
+                const dmg = 50;
                 f.health = Math.max(0, f.health - dmg);
 
                 if (f.health <= 0) {
@@ -2235,7 +2226,7 @@ export default function GameCanvas({
       if (!biteHappened) {
         s.ambientWildebeests.forEach(w => {
           if (biteHappened) return;
-          if (w.state === 'swimming' && w.state !== 'dead' && !w.completed && !w.onLogId) {
+          if (w.state === 'swimming' && !w.completed && !w.onLogId) {
             const d = Math.hypot(w.x - c.x, w.y - c.y);
             if (d < 25) {
               biteHappened = true;
@@ -2278,21 +2269,15 @@ export default function GameCanvas({
     if (alpha && alpha.completed) {
       s.currentWaveActive = false;
       
-      // Reward 25 gold corms for a successful single-player crossing
-      const finalGoldEarned = 25;
-
       setStats(prev => {
-        const nextCorms = prev.goldCorms + finalGoldEarned;
-        s.goldCormsEarned = nextCorms;
         return {
           ...prev,
-          goldCorms: nextCorms,
           herdTotal: Math.max(0, prev.herdTotal - s.waveTotalFollowersSpawning),
           herdCrossed: prev.herdCrossed + s.waveCrossedCount,
         };
       });
 
-      // Show level upgrades screen / Next Wave Trigger after 1.5 seconds delay
+      // Show day summary screen / Next Wave Trigger after 1.5 seconds delay
       setTimeout(() => {
         const totalHerdLeft = stats.herdTotal - s.waveTotalFollowersSpawning;
         
@@ -3087,9 +3072,12 @@ export default function GameCanvas({
         }}
         onResetGame={onResetGame}
         onSprintPressDown={() => {
+          // The game loop reads the button via stateRef; React state here only drives the button's pressed look
+          stateRef.current.keys['hopbutton'] = true;
           setActiveHUD(prev => ({ ...prev, isSprinting: true }));
         }}
         onSprintPressUp={() => {
+          stateRef.current.keys['hopbutton'] = false;
           setActiveHUD(prev => ({ ...prev, isSprinting: false }));
         }}
         isSprinting={activeHUD.isSprinting}

@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
 import MainMenu from './components/MainMenu';
 import GameCanvas from './components/GameCanvas';
-import UpgradeMenu from './components/UpgradeMenu';
+import DaySummary from './components/DaySummary';
 import GameOver from './components/GameOver';
-import { Upgrades, GameStats } from './types';
+import { GameStats } from './types';
 
-type ScreenState = 'menu' | 'playing' | 'upgrades' | 'gameover';
+type ScreenState = 'menu' | 'playing' | 'summary' | 'gameover';
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('menu');
   const [day, setDay] = useState<number>(1);
-  const [goldCorms, setGoldCorms] = useState<number>(0);
   
   // Total overall tallies (across days)
   const [totalSaved, setTotalSaved] = useState<number>(0);
   const [totalLost, setTotalLost] = useState<number>(0);
 
-  // Stats from the most recently completed day (to show in upgrade shop)
+  // Stats from the most recently completed day (to show in the day summary)
   const [dayStats, setDayStats] = useState<GameStats>({
     score: 0,
-    goldCorms: 0,
     day: 1,
     herdTotal: 45,
     herdActive: 0,
@@ -27,26 +25,10 @@ export default function App() {
     herdLost: 0,
   });
 
-  const [upgrades, setUpgrades] = useState<Upgrades>({
-    leaderSpeed: 0,
-    herdStamina: 0,
-    hornDefense: 0,
-    thickHides: 0,
-    distractionsCount: 0,
-  });
-
   const handleStartGame = () => {
     setDay(1);
-    setGoldCorms(0);
     setTotalSaved(0);
     setTotalLost(0);
-    setUpgrades({
-      leaderSpeed: 0,
-      herdStamina: 0,
-      hornDefense: 0,
-      thickHides: 0,
-      distractionsCount: 0,
-    });
     setScreen('playing');
   };
 
@@ -55,16 +37,11 @@ export default function App() {
     setTotalSaved(prev => prev + waveCrossed);
     setTotalLost(prev => prev + waveLost);
 
-    const gainedGold = waveCrossed * 12; // 12 gold corms per successful Crossing
-    const updatedGold = goldCorms + gainedGold;
-    setGoldCorms(updatedGold);
-
-    // Save stats for the shop display
+    // Save stats for the day summary
     const isCompletedMigration = day >= 10;
 
     setDayStats({
       score: (totalSaved + waveCrossed) * 10,
-      goldCorms: updatedGold,
       day: isCompletedMigration ? day : day + 1, // Prepare Day count for next wave
       herdTotal: isCompletedMigration ? 0 : Math.max(0, (35 + day * 10) - (waveCrossed + waveLost)), // next herd wave total estimation pool
       herdActive: 0,
@@ -75,21 +52,7 @@ export default function App() {
     if (isCompletedMigration) {
       setScreen('gameover');
     } else {
-      setScreen('upgrades');
-    }
-  };
-
-  const handlePurchaseUpgrade = (key: keyof Upgrades, cost: number) => {
-    if (goldCorms >= cost) {
-      setGoldCorms(prev => prev - cost);
-      setUpgrades(prev => ({
-        ...prev,
-        [key]: prev[key] + 1,
-      }));
-      setDayStats(prev => ({
-        ...prev,
-        goldCorms: prev.goldCorms - cost,
-      }));
+      setScreen('summary');
     }
   };
 
@@ -114,19 +77,10 @@ export default function App() {
 
   const handleResetGame = () => {
     setDay(1);
-    setGoldCorms(0);
     setTotalSaved(0);
     setTotalLost(0);
-    setUpgrades({
-      leaderSpeed: 0,
-      herdStamina: 0,
-      hornDefense: 0,
-      thickHides: 0,
-      distractionsCount: 0,
-    });
     setDayStats({
       score: 0,
-      goldCorms: 0,
       day: 1,
       herdTotal: 45,
       herdActive: 0,
@@ -137,7 +91,7 @@ export default function App() {
   };
 
   return (
-    <div className="w-full h-full bg-[#0a0a0a] font-sans text-[#e5e5e5] flex flex-col justify-between overflow-hidden relative">
+    <div className="w-full h-full bg-[#0a0a0a] font-sans text-[#e5e5e5] flex flex-col justify-between overflow-x-hidden overflow-y-auto relative">
       <div className="flex-1 w-full h-full min-h-screen">
         {screen === 'menu' && (
           <MainMenu onStartGame={handleStartGame} />
@@ -147,17 +101,15 @@ export default function App() {
           <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0a0a0a] p-2 md:p-6 pb-2">
             <GameCanvas
               day={day}
-              upgrades={upgrades}
               onWaveComplete={handleWaveComplete}
               onGameOver={handleGameOver}
-              initialGoldCorms={goldCorms}
               onResetGame={handleResetGame}
             />
           </div>
         )}
 
-        {screen === 'upgrades' && (
-          <UpgradeMenu
+        {screen === 'summary' && (
+          <DaySummary
             stats={dayStats}
             onNextWave={handleNextWave}
             onResetGame={handleResetGame}

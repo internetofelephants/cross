@@ -1,3 +1,7 @@
+// A swimming animal with no neighbor within this distance counts as isolated: stalker crocs hunt it
+// and the HUD shows the isolation warning.
+export const STRAY_DISTANCE = 120;
+
 export interface Position {
   x: number;
   y: number;
@@ -98,17 +102,8 @@ export interface GameParticle {
   maxLife: number;
 }
 
-export interface Upgrades {
-  leaderSpeed: number;     // speed multiplier
-  herdStamina: number;     // sprint duration multiplier
-  hornDefense: number;     // can stun crocodiles when sprinting
-  thickHides: number;      // chance to escape crocodile bites (0 to 1)
-  distractionsCount: number; // max active stones to throw
-}
-
 export interface GameStats {
   score: number;
-  goldCorms: number;        // Currency
   day: number;
   herdTotal: number;       // Remaining herd to cross (e.g., 30)
   herdActive: number;      // Current followers in level
