@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Waves, Play, RefreshCw } from 'lucide-react';
 import { playSelect } from '../utils/audio';
 import { GameStats } from '../types';
+import CrossingMap from './CrossingMap';
 
 interface DaySummaryProps {
   stats: GameStats;
@@ -41,6 +42,11 @@ export default function DaySummary({ stats, onNextWave, onResetGame }: DaySummar
             <span>PREDATOR INTENSITY:</span>
             <span className="text-red-400 font-bold">LEVEL {stats.day}</span>
           </div>
+        </div>
+
+        {/* Migration map: crossings done so far, next one pulsing */}
+        <div className="w-full mb-8 border border-[#2a2a2a] rounded-sm overflow-hidden">
+          <CrossingMap completed={stats.day - 1} justCompleted={stats.day - 1} />
         </div>
 
         {/* Stat cards row */}

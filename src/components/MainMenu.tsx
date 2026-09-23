@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Shield, Sparkles, Navigation, Waves, Volume2, VolumeX } from 'lucide-react';
 import { playSelect, toggleMute, getMuteStatus } from '../utils/audio';
+import CrossingMap from './CrossingMap';
 
 interface MainMenuProps {
   onStartGame: () => void;
@@ -50,6 +51,11 @@ export default function MainMenu({ onStartGame }: MainMenuProps) {
           <p className="font-sans tracking-[0.3em] text-white/40 uppercase text-[10px]">
             The Great Wildebeest Migration
           </p>
+        </div>
+
+        {/* Migration map: ten crossings ahead */}
+        <div className="w-full mb-8 border border-[#2a2a2a] rounded-sm overflow-hidden">
+          <CrossingMap completed={0} />
         </div>
 
         {/* Story Intro */}
