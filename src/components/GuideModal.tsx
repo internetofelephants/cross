@@ -82,7 +82,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
         role="dialog"
         aria-modal="true"
         aria-label="Information & Guide"
-        className="relative w-full max-w-xl rounded-sm bg-[#0d0d0d]/95 backdrop-blur-md text-[#e5e5e5] shadow-2xl border border-[#2a2a2a] overflow-hidden flex flex-col select-none"
+        className="relative w-full max-w-xl rounded-sm bg-panel/95 backdrop-blur-md text-[#e5e5e5] shadow-2xl border border-line overflow-hidden flex flex-col select-none"
         onClick={(e) => e.stopPropagation()}
         style={{
           transform: shown
@@ -95,7 +95,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
         }}
       >
         {/* Top bar */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#2a2a2a] bg-[#121212]/60">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-line bg-panel-raised/60">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-[#c2a078] text-[#0a0a0a] font-bold text-xs flex items-center justify-center">
               ?
@@ -107,7 +107,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-sm text-white/40 hover:text-[#c2a078] hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-1.5 rounded-sm text-white/60 hover:text-[#c2a078] hover:bg-white/5 transition-colors cursor-pointer"
             title="Close"
           >
             <X className="w-4 h-4" />
@@ -115,7 +115,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
         </div>
 
         {/* Tabs */}
-        <div className="relative flex border-b border-[#2a2a2a] bg-[#0a0a0a]/40" role="tablist">
+        <div className="relative flex border-b border-line bg-inset/40" role="tablist">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -128,7 +128,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
                 aria-controls={`guide-tabpanel-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 py-3 px-3 sm:px-4 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors cursor-pointer ${
-                  isActive ? 'text-[#c2a078] bg-[#121212]/80' : 'text-white/40 hover:text-white/70 hover:bg-white/[0.03]'
+                  isActive ? 'text-[#c2a078] bg-panel-raised/80' : 'text-white/60 hover:text-white/70 hover:bg-white/[0.03]'
                 }`}
               >
                 {tab.label}
@@ -151,7 +151,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
               role="tabpanel"
               aria-labelledby={`guide-tab-${tab.id}`}
               hidden={activeTab !== tab.id}
-              className="guide-scroll h-72 sm:h-80 w-full overflow-y-auto rounded-sm p-4 bg-[#0a0a0a]/60 border border-[#2a2a2a] select-text"
+              className="guide-scroll h-72 sm:h-80 w-full overflow-y-auto rounded-sm p-4 bg-inset/60 border border-line select-text"
             >
               {tab.content}
             </div>

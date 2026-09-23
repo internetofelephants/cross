@@ -68,11 +68,11 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#0a0a0a] p-6 select-none text-[#e5e5e5]">
+    <div className="flex flex-col items-center justify-center min-h-screen screen-glow p-6 select-none text-[#e5e5e5]">
       <div className="absolute top-10 right-10 z-10 flex gap-2">
         <button
           onClick={handleMuteToggle}
-          className="p-3 rounded-full bg-[#0d0d0d] border border-[#2a2a2a] hover:border-[#c2a078]/50 hover:bg-[#121212] text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
+          className="p-3 rounded-full bg-panel border border-line hover:border-[#c2a078]/50 hover:bg-panel-raised text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
           title={muted ? "Unmute sounds" : "Mute sounds"}
         >
           {muted ? <VolumeX className="w-5 h-5 text-neutral-500" /> : <Volume2 className="w-5 h-5 text-[#c2a078]" />}
@@ -80,7 +80,7 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
         <button
           id="gameover-guide-btn"
           onClick={() => { playSelect(); setGuideOpen(true); }}
-          className="p-3 rounded-full bg-[#0d0d0d] border border-[#2a2a2a] hover:border-[#c2a078]/50 hover:bg-[#121212] text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
+          className="p-3 rounded-full bg-panel border border-line hover:border-[#c2a078]/50 hover:bg-panel-raised text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
           title="Help & Information"
         >
           <HelpCircle className="w-5 h-5" />
@@ -89,12 +89,12 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
 
       <GuideModal isOpen={guideOpen} originId="gameover-guide-btn" onClose={() => setGuideOpen(false)} />
 
-      <div className="relative w-full max-w-xl bg-[#0d0d0d] border border-[#2a2a2a] rounded overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
+      <div className="relative w-full max-w-xl bg-panel border border-line rounded overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
         {/* Subtle background light */}
         <div className="absolute -top-32 -left-32 w-64 h-64 bg-[#c2a078]/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Skull or Sparkles Icon */}
-        <div className={`p-4 bg-[#0a0a0a] border border-[#2a2a2a] rounded-sm mb-6 relative ${isVictory ? 'text-[#c2a078]' : 'text-[#a34d4d]'}`}>
+        <div className={`p-4 bg-inset border border-line rounded-sm mb-6 relative ${isVictory ? 'text-[#c2a078]' : 'text-[#a34d4d]'}`}>
           {isVictory ? <Sparkles className="w-12 h-12" /> : <Skull className="w-12 h-12" />}
         </div>
 
@@ -103,7 +103,7 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
           <h1 className="font-display text-3xl font-light tracking-widest text-[#c2a078] uppercase pb-1">
             {titleText}
           </h1>
-          <p className="text-xs text-white/40 leading-relaxed max-w-sm mx-auto font-sans">
+          <p className="text-xs text-white/60 leading-relaxed max-w-sm mx-auto font-sans">
             {subtitle}
           </p>
         </div>
@@ -115,9 +115,9 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
         </div>
 
         {/* Final Statistics Panel */}
-        <div className="w-full bg-[#121212] rounded-sm border border-[#2a2a2a] p-5 mb-8">
+        <div className="w-full bg-panel-raised rounded-sm border border-line p-5 mb-8">
           <div className="flex justify-between items-center text-xs font-sans">
-            <span className="text-white/40 uppercase tracking-wider text-[10px]">
+            <span className="text-white/60 uppercase tracking-wider text-[10px]">
               {isVictory ? "Crossings Made" : "Lost At"}
             </span>
             <span className="text-[#c2a078] font-mono font-bold text-sm bg-[#c2a078]/10 px-3 py-1 border border-[#c2a078]/20 rounded-sm">
@@ -125,8 +125,8 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
             </span>
           </div>
           {!isVictory && deathCause && (
-            <div className="flex justify-between items-center text-xs font-sans mt-3 pt-3 border-t border-[#2a2a2a]">
-              <span className="text-white/40 uppercase tracking-wider text-[10px]">Cause</span>
+            <div className="flex justify-between items-center text-xs font-sans mt-3 pt-3 border-t border-line">
+              <span className="text-white/60 uppercase tracking-wider text-[10px]">Cause</span>
               <span className="text-[#a34d4d] font-sans font-semibold text-xs">{CAUSE_TEXT[deathCause]}</span>
             </div>
           )}

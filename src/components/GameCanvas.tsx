@@ -270,6 +270,7 @@ export default function GameCanvas({
     let numStalkers = 1;
     let numSleepers = 2;
 
+    // Every crossing has more crocodiles in total than the one before, and no type ever decreases
     switch (day) {
       case 1:
         numLaneCrocs = 1; numStalkers = 1; numSleepers = 2;
@@ -281,13 +282,13 @@ export default function GameCanvas({
         numLaneCrocs = 2; numStalkers = 2; numSleepers = 3;
         break;
       case 4:
-        numLaneCrocs = 2; numStalkers = 2; numSleepers = 3;
+        numLaneCrocs = 2; numStalkers = 2; numSleepers = 4;
         break;
       case 5:
-        numLaneCrocs = 3; numStalkers = 1; numSleepers = 4;
+        numLaneCrocs = 3; numStalkers = 2; numSleepers = 4;
         break;
       case 6:
-        numLaneCrocs = 3; numStalkers = 2; numSleepers = 4;
+        numLaneCrocs = 3; numStalkers = 2; numSleepers = 5;
         break;
       case 7:
         numLaneCrocs = 4; numStalkers = 2; numSleepers = 5;
@@ -2108,14 +2109,14 @@ export default function GameCanvas({
 
     // 1. DRAW SAFARI GRASSLANDS & BANKS
     // Left Serengeti Bank
-    ctx.fillStyle = '#1e1a15'; // Deep dark warm brown/charcoal Left Bank
+    ctx.fillStyle = '#4b4131'; // Dusty savanna brown Left Bank
     ctx.fillRect(0, 0, 180, 675);
 
     // Left mud transition / short cliff drop-off (Y: 0 to 675)
-    ctx.fillStyle = '#2d1f15'; // Deep dark soil
+    ctx.fillStyle = '#3d2e21'; // Dark soil
     ctx.fillRect(180, 0, 40, 675);
     // Draw some jagged rocky patterns representing a steep cliff height drop
-    ctx.strokeStyle = '#18120e';
+    ctx.strokeStyle = '#2a1f16';
     ctx.lineWidth = 2.5;
     for (let cY = 10; cY < 670; cY += 30) {
       ctx.beginPath();
@@ -2124,7 +2125,7 @@ export default function GameCanvas({
       ctx.stroke();
     }
     // Highlighting cliff edge lines
-    ctx.strokeStyle = '#5a3d2c';
+    ctx.strokeStyle = '#6e4d37';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(220, 0);
@@ -2132,15 +2133,15 @@ export default function GameCanvas({
     ctx.stroke();
 
     // Right Masai Mara Bank
-    ctx.fillStyle = '#24211a'; // Deep golden-hued dark charcoal Right Bank
+    ctx.fillStyle = '#50462f'; // Dusty golden savanna Right Bank
     ctx.fillRect(1020, 0, 180, 675);
 
     // Right mud transition - Steep muddy cliffs by default
-    ctx.fillStyle = '#1c130d'; // Deep steep dry vertical clay bank
+    ctx.fillStyle = '#3a2a1d'; // Steep dry vertical clay bank
     ctx.fillRect(980, 0, 40, 675);
 
     // Draw steep jagged rocky cliff horizontal lines/ridges
-    ctx.strokeStyle = '#2d1f15';
+    ctx.strokeStyle = '#271c13';
     ctx.lineWidth = 3;
     for (let cliffY = 12; cliffY < 670; cliffY += 25) {
       // Skip ridges where safe exit channels are!
@@ -2217,16 +2218,16 @@ export default function GameCanvas({
       ctx.strokeRect(980, 460, 40, 120);
     }
 
-    // 2. DRAW FLOWING MARA RIVER BED with the Sophisticated Dark gradient
+    // 2. DRAW FLOWING MARA RIVER BED: muddy olive shallows to a teal channel
     const waterGrad = ctx.createLinearGradient(220, 0, 980, 0);
-    waterGrad.addColorStop(0, '#1a1410');
-    waterGrad.addColorStop(0.5, '#1c2e36');
-    waterGrad.addColorStop(1, '#1a1410');
+    waterGrad.addColorStop(0, '#34402f');
+    waterGrad.addColorStop(0.5, '#2f5563');
+    waterGrad.addColorStop(1, '#34402f');
     ctx.fillStyle = waterGrad;
     ctx.fillRect(220, 0, 760, 675);
 
     // Draw animated current flow lines matching white/15 opacity
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
     const timeVal = Date.now() * 0.05;
     for (let c = 240; c < 970; c += 80) {
@@ -2781,7 +2782,7 @@ export default function GameCanvas({
 
   return (
     <div 
-      className="relative flex flex-col w-full h-full items-center justify-center p-2 rounded-sm bg-[#0a0a0a] overflow-hidden"
+      className="relative flex flex-col w-full h-full items-center justify-center p-2 rounded-sm bg-page overflow-hidden"
       ref={containerRef}
     >
       {/* HUD Panel overlaid on top of game */}
@@ -2831,7 +2832,7 @@ export default function GameCanvas({
             y: ((e.clientY - rect.top) / rect.height) * 675,
           };
         }}
-        className="w-full h-auto aspect-[16/9] bg-[#0d0d0d] border border-[#2a2a2a] rounded-sm max-w-[1200px] shadow-2xl transition-all cursor-crosshair select-none"
+        className="w-full h-auto aspect-[16/9] bg-panel border border-line rounded-sm max-w-[1200px] shadow-2xl transition-all cursor-crosshair select-none"
       />
 
       {activeHUD.isClimbingCliff && (
@@ -2847,8 +2848,8 @@ export default function GameCanvas({
       )}
 
       {playerDeathMessage && (
-        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-[#0a0a0a]/95 p-6 text-center select-none">
-          <div className="max-w-md bg-[#0d0d0d] border border-red-950/40 rounded p-8 flex flex-col items-center shadow-2xl relative">
+        <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-inset/95 p-6 text-center select-none">
+          <div className="max-w-md bg-panel border border-red-950/40 rounded p-8 flex flex-col items-center shadow-2xl relative">
             {/* Subtle red background glow */}
             <div className="absolute -top-16 -left-16 w-32 h-32 bg-red-500/5 rounded-full blur-2xl pointer-events-none" />
 

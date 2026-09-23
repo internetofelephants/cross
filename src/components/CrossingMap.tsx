@@ -10,25 +10,25 @@ const TOTAL_CROSSINGS = 10;
 
 // Night-time palette taken from the in-game canvas (banks, river, crocs) and the UI's gold accent.
 const C = {
-  land: '#1e1a15',
-  tuft: '#3a3124',
-  trunk: '#3b2c1e',
-  canopy: '#34462b',
-  bank: '#2d1f15',
-  deepWater: '#1a2a31',
-  shallows: '#22404a',
+  land: '#3f3628',
+  tuft: '#574a36',
+  trunk: '#4a3826',
+  canopy: '#4a6139',
+  bank: '#3d2e21',
+  deepWater: '#2a4652',
+  shallows: '#335a67',
   flow: '#9fc3cc',
   croc: '#4d7043',
   crocEye: '#ffd700',
   gold: '#c2a078',
-  stoneShadow: '#0e171b',
-  stoneTodo: '#34444a',
-  stoneTodoText: '#8fa3a8',
+  stoneShadow: '#18262b',
+  stoneTodo: '#475a60',
+  stoneTodoText: '#b0c2c6',
   ink: '#1e1a15',
   labelActive: '#e5e5e5',
-  labelTodo: '#8a8272',
-  nameActive: '#a8977c',
-  nameTodo: '#665e50',
+  labelTodo: '#aaa190',
+  nameActive: '#c4b394',
+  nameTodo: '#8a806e',
 };
 
 export const CROSSING_NAMES = [

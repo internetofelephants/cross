@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import MainMenu from './components/MainMenu';
+import TitleScreen from './components/TitleScreen';
 import GameCanvas from './components/GameCanvas';
 import DaySummary from './components/DaySummary';
 import { DeathCause } from './types';
@@ -10,6 +11,8 @@ type ScreenState = 'menu' | 'playing' | 'summary' | 'gameover';
 export default function App() {
   const [screen, setScreen] = useState<ScreenState>('menu');
   const [day, setDay] = useState<number>(1);
+  // Concept-art title screen, shown once on load over the start screen
+  const [showTitle, setShowTitle] = useState(true);
   // Set when the lead wildebeest dies; null after a win
   const [deathCause, setDeathCause] = useState<DeathCause | null>(null);
 
@@ -57,14 +60,16 @@ export default function App() {
   };
 
   return (
-    <div className="w-full h-full bg-[#0a0a0a] font-sans text-[#e5e5e5] flex flex-col justify-between overflow-x-hidden overflow-y-auto relative">
+    <div className="w-full h-full bg-page font-sans text-[#e5e5e5] flex flex-col justify-between overflow-x-hidden overflow-y-auto relative">
       <div className="flex-1 w-full h-full min-h-screen">
         {screen === 'menu' && (
           <MainMenu onStartGame={handleStartGame} onPlayCrossing={handlePlayCrossing} />
         )}
 
+        {showTitle && <TitleScreen onDone={() => setShowTitle(false)} />}
+
         {screen === 'playing' && (
-          <div className="w-full h-full min-h-screen flex items-center justify-center bg-[#0a0a0a] p-2 md:p-6 pb-2">
+          <div className="w-full h-full min-h-screen flex items-center justify-center screen-glow p-2 md:p-6 pb-2">
             <GameCanvas
               day={day}
               onWaveComplete={handleWaveComplete}

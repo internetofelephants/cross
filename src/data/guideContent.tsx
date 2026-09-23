@@ -105,11 +105,11 @@ const INSTRUCTIONS: InstructionCard[] = [
 export const InstructionsContent: React.FC = () => (
   <div className="space-y-3 text-xs leading-relaxed font-sans">
     {INSTRUCTIONS.map((card) => (
-      <div key={card.title} className="bg-[#121212] p-4 rounded-sm border border-[#2a2a2a] flex gap-3">
-        <div className="p-2 rounded-sm bg-[#0d0d0d] text-[#c2a078] h-fit">{card.icon}</div>
+      <div key={card.title} className="bg-panel-raised p-4 rounded-sm border border-line flex gap-3">
+        <div className="p-2 rounded-sm bg-panel text-[#c2a078] h-fit">{card.icon}</div>
         <div>
           <h4 className="font-medium text-[#c2a078] uppercase tracking-wider mb-1 text-[11px]">{card.title}</h4>
-          <p className="text-white/50 leading-normal">{card.body}</p>
+          <p className="text-white/65 leading-normal">{card.body}</p>
         </div>
       </div>
     ))}

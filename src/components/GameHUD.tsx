@@ -62,7 +62,7 @@ export default function GameHUD({
         
         {/* Left Side: Stats Panel */}
         <div className="flex gap-2">
-          <div className="bg-[#0d0d0d]/95 border border-[#2a2a2a] rounded-sm px-4 py-3 shadow-xl backdrop-blur-md flex gap-4 text-xs font-mono">
+          <div className="bg-panel/95 border border-line rounded-sm px-4 py-3 shadow-xl backdrop-blur-md flex gap-4 text-xs font-mono">
             <div>
               <span className="text-[9px] text-[#c2a078] uppercase block tracking-widest font-semibold font-sans">Crossing</span>
               <span className="text-lg font-display font-light text-[#e5e5e5]">#{day}</span>
@@ -75,7 +75,7 @@ export default function GameHUD({
           {/* Restart */}
           <button
             onClick={(e) => { e.currentTarget.blur(); onRestartWave(); }}
-            className="p-2.5 rounded-sm bg-[#0d0d0d]/95 hover:bg-[#121212] border border-[#2a2a2a] text-white/40 hover:text-[#a34d4d] hover:border-[#a34d4d]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
+            className="p-2.5 rounded-sm bg-panel/95 hover:bg-panel-raised border border-line text-white/60 hover:text-[#a34d4d] hover:border-[#a34d4d]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
             title="Restart Active Wave"
           >
             <RotateCcw className="w-4 h-4" />
@@ -95,7 +95,7 @@ export default function GameHUD({
             className={`p-2.5 rounded-sm border shadow-xl backdrop-blur-md transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
               isConfirmingReset 
                 ? 'bg-red-950 hover:bg-red-900 border-red-700 text-red-200 animate-pulse px-3' 
-                : 'bg-[#0d0d0d]/95 hover:bg-[#121212] border-[#2a2a2a] text-red-400 hover:border-red-500/30'
+                : 'bg-panel/95 hover:bg-panel-raised border-line text-red-400 hover:border-red-500/30'
             }`}
             title={isConfirmingReset ? "Confirm Reset to Crossing #1" : "Reset Game & Start Over from Crossing #1"}
           >
@@ -106,7 +106,7 @@ export default function GameHUD({
           {/* Sound Mute */}
           <button
             onClick={handleMuteToggle}
-            className="p-2.5 rounded-sm bg-[#0d0d0d]/95 hover:bg-[#121212] border border-[#2a2a2a] text-[#c2a078] hover:border-[#c2a078]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
+            className="p-2.5 rounded-sm bg-panel/95 hover:bg-panel-raised border border-line text-[#c2a078] hover:border-[#c2a078]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
             title={muted ? "Unmute sounds" : "Mute sounds"}
           >
             {muted ? <VolumeX className="w-4 h-4 text-[#e5e5e5]/40" /> : <Volume2 className="w-4 h-4 text-[#c2a078]" />}
@@ -116,7 +116,7 @@ export default function GameHUD({
           <button
             id="hud-guide-btn"
             onClick={(e) => { e.currentTarget.blur(); playSelect(); setGuide(true); }}
-            className="p-2.5 rounded-sm bg-[#0d0d0d]/95 hover:bg-[#121212] border border-[#2a2a2a] text-[#c2a078] hover:border-[#c2a078]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
+            className="p-2.5 rounded-sm bg-panel/95 hover:bg-panel-raised border border-line text-[#c2a078] hover:border-[#c2a078]/30 shadow-xl backdrop-blur-md transition-all cursor-pointer"
             title="Help & Information"
           >
             <HelpCircle className="w-4 h-4" />
@@ -138,16 +138,16 @@ export default function GameHUD({
       <div className="w-full flex flex-col md:flex-row gap-4 items-center justify-between mt-auto mx-auto max-w-5xl">
         
         {/* Stamina / Power Indicators */}
-        <div className="flex flex-col gap-1.5 w-full max-w-xs pointer-events-auto bg-[#0d0d0d]/95 border border-[#2a2a2a] rounded-sm p-3 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col gap-1.5 w-full max-w-xs pointer-events-auto bg-panel/95 border border-line rounded-sm p-3 shadow-xl backdrop-blur-md">
           {/* Health Bar */}
-          <div className="flex justify-between items-center text-[10px] font-semibold text-white/40">
+          <div className="flex justify-between items-center text-[10px] font-semibold text-white/60">
             <span className="flex items-center gap-1 uppercase font-mono tracking-widest text-[#a34d4d]">
               <Heart className="w-3.5 h-3.5 fill-[#a34d4d] text-[#a34d4d]" />
               Alpha Health
             </span>
             <span className="font-mono text-[#a34d4d]">{Math.round(health)}%</span>
           </div>
-          <div className="w-full h-2 bg-[#0a0a0a] rounded-sm overflow-hidden border border-[#2a2a2a] mb-1">
+          <div className="w-full h-2 bg-inset rounded-sm overflow-hidden border border-line mb-1">
             <div 
               style={{ width: `${health}%` }} 
               className={`h-full transition-all duration-75 rounded-sm ${
@@ -160,7 +160,7 @@ export default function GameHUD({
             />
           </div>
 
-          <div className="flex justify-between items-center text-[10px] font-semibold text-white/40">
+          <div className="flex justify-between items-center text-[10px] font-semibold text-white/60">
             <span className="flex items-center gap-1 uppercase font-mono tracking-widest">
               <Dumbbell className="w-3.5 h-3.5 text-[#c2a078] animate-pulse" />
               Alpha Stamina
@@ -169,7 +169,7 @@ export default function GameHUD({
           </div>
 
           {/* Progress bar container */}
-          <div className="w-full h-2 bg-[#0a0a0a] rounded-sm overflow-hidden border border-[#2a2a2a]">
+          <div className="w-full h-2 bg-inset rounded-sm overflow-hidden border border-line">
             <div 
               style={{ width: `${stamina}%` }} 
               className={`h-full transition-all duration-75 rounded-sm ${
@@ -182,13 +182,13 @@ export default function GameHUD({
             />
           </div>
           
-          <div className="text-[9px] text-white/40 leading-none mt-1">
+          <div className="text-[9px] text-white/60 leading-none mt-1">
             {stamina < 15 ? '‼️ LOW ENERGY: Cannot make leap hops currently!' : 'Hold SPACE to lunge jump (push other wildebeests, dodge teeth)'}
           </div>
         </div>
 
         {/* Hotkeys / Touch Control Actions */}
-        <div className="flex gap-3 pointer-events-auto bg-[#0d0d0d]/95 border border-[#2a2a2a] rounded-sm p-2.5 shadow-xl backdrop-blur-md items-center">
+        <div className="flex gap-3 pointer-events-auto bg-panel/95 border border-line rounded-sm p-2.5 shadow-xl backdrop-blur-md items-center">
           {/* Sprint Action Button (Touch Helper to Hop) */}
           <button
             onMouseDown={onSprintPressDown}
@@ -200,7 +200,7 @@ export default function GameHUD({
             className={`px-5 py-2.5 rounded-sm font-sans text-[10px] font-semibold tracking-widest uppercase transition-all flex items-center gap-1.5 cursor-pointer border-0 select-none ${
               isSprinting
                 ? 'bg-[#c2a078] text-[#0a0a0a] scale-[0.97]'
-                : 'bg-[#121212] hover:bg-white/5 text-white/80 border border-[#2a2a2a]'
+                : 'bg-panel-raised hover:bg-white/5 text-white/80 border border-line'
             }`}
           >
             <Zap className={`w-3.5 h-3.5 ${isSprinting ? 'animate-bounce fill-neutral-950 text-neutral-950' : 'text-[#c2a078]'}`} />
