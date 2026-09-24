@@ -72,7 +72,7 @@ const INSTRUCTIONS: InstructionCard[] = [
     title: 'Hopping',
     body: (
       <>
-        Press <Key>SPACEBAR</Key> or the <Key>Jump Hop</Key> button to hop while in the water. Each hop costs{' '}
+        Press <Key>Space</Key> or the <Key>Hop!</Key> button to hop while in the water. Each hop costs{' '}
         <Red>15% stamina</Red>. It gives a short lunge forward and shoves nearby animals aside, breaking up a
         stampede. Time it well and you leap clear over a crocodile&rsquo;s jaws.
       </>
@@ -105,10 +105,10 @@ const INSTRUCTIONS: InstructionCard[] = [
 export const InstructionsContent: React.FC = () => (
   <div className="space-y-3 text-xs leading-relaxed font-sans">
     {INSTRUCTIONS.map((card) => (
-      <div key={card.title} className="bg-panel-raised p-4 rounded-sm border border-line flex gap-3">
-        <div className="p-2 rounded-sm bg-panel text-[#c2a078] h-fit">{card.icon}</div>
+      <div key={card.title} className="bg-panel-raised p-4 rounded-xl border border-line flex gap-3">
+        <div className="p-2 rounded-lg bg-panel text-[#c2a078] h-fit">{card.icon}</div>
         <div>
-          <h4 className="font-medium text-[#c2a078] uppercase tracking-wider mb-1 text-[11px]">{card.title}</h4>
+          <h4 className="font-display font-semibold text-[#c2a078] mb-1 text-sm">{card.title}</h4>
           <p className="text-white/65 leading-normal">{card.body}</p>
         </div>
       </div>

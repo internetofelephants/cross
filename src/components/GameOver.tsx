@@ -33,13 +33,13 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
   const finished = isVictory ? 10 : dayReached - 1;
   const herds = `${finished} herd${finished === 1 ? '' : 's'}`;
 
-  let titleText = "Crossing Failed";
+  let titleText = "The river won this one";
   let subtitle = "No herd made it across this time. The Mara is unforgiving.";
   let badgeColor = "border-rose-500/30 text-rose-400 bg-rose-500/10";
   let grade = "Riverbank Rookie";
   
   if (isVictory) {
-    titleText = "All Ten Crossings Made!";
+    titleText = "All ten crossings made!";
     subtitle = "You led a herd safely across every one of the ten crossings, from the gentlest to the most dangerous point on the Mara. Fresh grazing awaits on the far bank.";
     grade = "Serengeti Savior";
     badgeColor = "border-[#c2a078]/30 text-[#c2a078] bg-[#c2a078]/10 animate-pulse";
@@ -89,45 +89,45 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
 
       <GuideModal isOpen={guideOpen} originId="gameover-guide-btn" onClose={() => setGuideOpen(false)} />
 
-      <div className="relative w-full max-w-xl bg-panel border border-line rounded overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
+      <div className="relative w-full max-w-xl bg-panel border border-line rounded-2xl overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
         {/* Subtle background light */}
         <div className="absolute -top-32 -left-32 w-64 h-64 bg-[#c2a078]/5 rounded-full blur-3xl pointer-events-none" />
 
         {/* Skull or Sparkles Icon */}
-        <div className={`p-4 bg-inset border border-line rounded-sm mb-6 relative ${isVictory ? 'text-[#c2a078]' : 'text-[#a34d4d]'}`}>
+        <div className={`p-4 bg-inset border border-line rounded-2xl mb-6 relative ${isVictory ? 'text-[#c2a078]' : 'text-[#a34d4d]'}`}>
           {isVictory ? <Sparkles className="w-12 h-12" /> : <Skull className="w-12 h-12" />}
         </div>
 
         {/* Title & Comment */}
         <div className="text-center space-y-3 mb-8">
-          <h1 className="font-display text-3xl font-light tracking-widest text-[#c2a078] uppercase pb-1">
+          <h1 className="font-display text-3xl md:text-4xl font-semibold text-[#c2a078]">
             {titleText}
           </h1>
-          <p className="text-xs text-white/60 leading-relaxed max-w-sm mx-auto font-sans">
+          <p className="text-[13px] text-white/70 leading-relaxed max-w-sm mx-auto font-sans">
             {subtitle}
           </p>
         </div>
 
         {/* Grade Badge */}
-        <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-sm border text-[10px] tracking-widest font-semibold uppercase mb-8 ${badgeColor}`}>
+        <div className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border text-sm font-display font-semibold mb-8 ${badgeColor}`}>
           <Award className="w-4 h-4" />
           Rank: {grade}
         </div>
 
         {/* Final Statistics Panel */}
-        <div className="w-full bg-panel-raised rounded-sm border border-line p-5 mb-8">
+        <div className="w-full bg-panel-raised rounded-xl border border-line p-5 mb-8">
           <div className="flex justify-between items-center text-xs font-sans">
             <span className="text-white/60 uppercase tracking-wider text-[10px]">
-              {isVictory ? "Crossings Made" : "Lost At"}
+              {isVictory ? "Crossings made" : "Lost at"}
             </span>
-            <span className="text-[#c2a078] font-mono font-bold text-sm bg-[#c2a078]/10 px-3 py-1 border border-[#c2a078]/20 rounded-sm">
+            <span className="text-[#c2a078] font-display font-semibold text-base bg-[#c2a078]/10 px-3 py-0.5 border border-[#c2a078]/20 rounded-full">
               {isVictory ? "10 / 10" : `Crossing #${dayReached}`}
             </span>
           </div>
           {!isVictory && deathCause && (
             <div className="flex justify-between items-center text-xs font-sans mt-3 pt-3 border-t border-line">
               <span className="text-white/60 uppercase tracking-wider text-[10px]">Cause</span>
-              <span className="text-[#a34d4d] font-sans font-semibold text-xs">{CAUSE_TEXT[deathCause]}</span>
+              <span className="text-[#c96a6a] font-display font-semibold text-base">{CAUSE_TEXT[deathCause]}</span>
             </div>
           )}
         </div>
@@ -137,23 +137,23 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
           {!isVictory && (
             <button
               onClick={handleRetryClick}
-              className="px-8 py-3.5 rounded-sm bg-[#c2a078] hover:bg-[#b08f68] font-sans text-xs font-semibold tracking-[0.2em] uppercase text-[#0a0a0a] shadow-md active:scale-[0.98] transition-all cursor-pointer inline-flex items-center justify-center gap-2 border-0"
+              className="px-8 py-3 whitespace-nowrap rounded-full font-display text-base font-semibold transition-all cursor-pointer inline-flex items-center justify-center gap-2 bg-[#c2a078] hover:bg-[#d1b08a] text-[#1e1a15] shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] border-0"
             >
               <RotateCcw className="w-4 h-4" />
-              Try Crossing Again
+              Try crossing again
             </button>
           )}
 
           <button
             onClick={handleNewMigrationClick}
-            className={`px-8 py-3.5 rounded-sm font-sans text-xs font-semibold tracking-[0.2em] uppercase transition-all cursor-pointer inline-flex items-center justify-center gap-2 ${
+            className={`px-8 py-3 whitespace-nowrap rounded-full font-display text-base font-semibold transition-all cursor-pointer inline-flex items-center justify-center gap-2 ${
               isVictory
-                ? 'bg-[#c2a078] hover:bg-[#b08f68] text-[#0a0a0a] border-0 shadow-md active:scale-[0.98]'
+                ? 'bg-[#c2a078] hover:bg-[#d1b08a] text-[#1e1a15] border-0 shadow-lg active:scale-[0.98]'
                 : 'border border-[#c2a078]/40 hover:border-[#c2a078] text-[#c2a078] hover:bg-[#c2a078]/10'
             }`}
           >
             {isVictory ? <RotateCcw className="w-4 h-4" /> : null}
-            Start Over from Crossing #1
+            Start over
           </button>
         </div>
       </div>

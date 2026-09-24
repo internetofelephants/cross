@@ -257,15 +257,16 @@ export default function CrossingMap({ completed, justCompleted, onSelect, classN
                   x={p.x}
                   y={p.y + 5}
                   textAnchor="middle"
-                  fontSize={14}
+                  fontSize={15}
                   fontWeight={600}
+                  fontFamily="var(--font-display)"
                   fill={state === 'todo' ? C.stoneTodoText : C.gold}
                 >
                   {i + 1}
                 </text>
               )}
             </g>
-            <text x={lx} y={ly} textAnchor="middle" fontSize={12} fontWeight={600} fill={state === 'todo' ? C.labelTodo : C.labelActive}>
+            <text x={lx} y={ly} textAnchor="middle" fontSize={13} fontWeight={600} fontFamily="var(--font-display)" fill={state === 'todo' ? C.labelTodo : C.labelActive}>
               Crossing #{i + 1}
             </text>
             <text x={lx} y={ly + 13} textAnchor="middle" fontSize={11} fill={state === 'todo' ? C.nameTodo : C.nameActive}>

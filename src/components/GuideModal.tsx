@@ -82,7 +82,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
         role="dialog"
         aria-modal="true"
         aria-label="Information & Guide"
-        className="relative w-full max-w-xl rounded-sm bg-panel/95 backdrop-blur-md text-[#e5e5e5] shadow-2xl border border-line overflow-hidden flex flex-col select-none"
+        className="relative w-full max-w-xl rounded-2xl bg-panel/95 backdrop-blur-md text-[#e5e5e5] shadow-2xl border border-line overflow-hidden flex flex-col select-none"
         onClick={(e) => e.stopPropagation()}
         style={{
           transform: shown
@@ -100,8 +100,8 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
             <span className="w-6 h-6 rounded-full bg-[#c2a078] text-[#0a0a0a] font-bold text-xs flex items-center justify-center">
               ?
             </span>
-            <h3 className="font-display text-base font-light tracking-widest text-[#c2a078] uppercase">
-              Information & Guide
+            <h3 className="font-display text-lg font-semibold text-[#c2a078]">
+              Information & guide
             </h3>
           </div>
           <button
@@ -127,7 +127,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
                 aria-selected={isActive}
                 aria-controls={`guide-tabpanel-${tab.id}`}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 px-3 sm:px-4 text-center text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] transition-colors cursor-pointer ${
+                className={`flex-1 py-3 px-3 sm:px-4 text-center font-display text-sm sm:text-base font-semibold transition-colors cursor-pointer ${
                   isActive ? 'text-[#c2a078] bg-panel-raised/80' : 'text-white/60 hover:text-white/70 hover:bg-white/[0.03]'
                 }`}
               >
@@ -151,7 +151,7 @@ export default function GuideModal({ isOpen, onClose, originId }: GuideModalProp
               role="tabpanel"
               aria-labelledby={`guide-tab-${tab.id}`}
               hidden={activeTab !== tab.id}
-              className="guide-scroll h-72 sm:h-80 w-full overflow-y-auto rounded-sm p-4 bg-inset/60 border border-line select-text"
+              className="guide-scroll h-72 sm:h-80 w-full overflow-y-auto rounded-xl p-4 bg-inset/60 border border-line select-text"
             >
               {tab.content}
             </div>

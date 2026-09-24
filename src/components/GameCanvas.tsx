@@ -890,15 +890,15 @@ export default function GameCanvas({
 
 
       let deathCause: DeathCause = 'drowned';
-      let cause = "Drowned from exhaustion: Your stamina depleted while swimming in the turbulent river, and you sank beneath the waves.";
+      let cause = "You ran out of stamina in deep water and slipped under. Pace yourself, and save your hops for when you need them.";
       let title = "Drowned";
       if (alpha.y >= 645) {
         deathCause = 'washed';
-        cause = "Washed away down river: The powerful currents swept you downstream beyond the safe landing banks.";
-        title = "Washed Away";
+        cause = "The current carried you too far downstream. Angle a little upstream as you swim across.";
+        title = "Washed away";
       } else if (alpha.isCrowded) {
         deathCause = 'trampled';
-        cause = "Trampled in the stampede: You got caught in the frantic crowd crush of the herd and drowned.";
+        cause = "You were caught in the crush of the herd for too long. Hop or steer your way out of a stampede.";
         title = "Trampled";
       }
 
@@ -1975,7 +1975,7 @@ export default function GameCanvas({
               // Allow the crocodile to swim downstream with him for 3s, then show the death tile
               setTimeout(() => {
                 s.currentWaveActive = false;
-                setPlayerDeathMessage("Eaten by a crocodile: A patient predator lying in wait dragged you into the deep.");
+                setPlayerDeathMessage("A crocodile caught you. Watch for open jaws, and hop to leap clear of them.");
                 setPlayerDeathTitle("Eaten");
               }, 3000);
             } else {
@@ -2196,8 +2196,8 @@ export default function GameCanvas({
       ctx.fillRect(980, 80, 40, 120);
       
       ctx.fillStyle = '#ff7b7b';
-      ctx.font = 'bold 10px Inter, system-ui, sans-serif';
-      ctx.fillText('⚠️ BOTTLE-NECK!', 838, 145);
+      ctx.font = '600 13px Fredoka, system-ui, sans-serif';
+      ctx.fillText('⚠️ Bottleneck!', 838, 145);
       
       ctx.strokeStyle = '#ef444b';
       ctx.lineWidth = 1.5;
@@ -2210,8 +2210,8 @@ export default function GameCanvas({
       ctx.fillRect(980, 460, 40, 120);
       
       ctx.fillStyle = '#ff7b7b';
-      ctx.font = 'bold 10px Inter, system-ui, sans-serif';
-      ctx.fillText('⚠️ BOTTLE-NECK!', 838, 525);
+      ctx.font = '600 13px Fredoka, system-ui, sans-serif';
+      ctx.fillText('⚠️ Bottleneck!', 838, 525);
       
       ctx.strokeStyle = '#ef444b';
       ctx.lineWidth = 1.5;
@@ -2832,28 +2832,28 @@ export default function GameCanvas({
             y: ((e.clientY - rect.top) / rect.height) * 675,
           };
         }}
-        className="w-full h-auto aspect-[16/9] bg-panel border border-line rounded-sm max-w-[1200px] shadow-2xl transition-all cursor-crosshair select-none"
+        className="w-full h-auto aspect-[16/9] bg-panel border border-line rounded-xl max-w-[1200px] shadow-2xl transition-all cursor-crosshair select-none"
       />
 
       {activeHUD.isClimbingCliff && (
-        <div className="absolute top-24 left-1/2 -translate-x-1/2 px-4 py-2 bg-red-950/95 border border-red-700/60 rounded-sm text-red-100 font-mono text-[10px] tracking-widest uppercase animate-bounce pointer-events-none shadow-xl flex items-center gap-1.5 z-20">
-          <span className="text-red-500 animate-pulse">⚠️</span> Impassable Mud Cliff! Swim to Green Exit Ramps!
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 px-5 py-2 bg-red-950/95 border border-red-700/60 rounded-full text-red-100 font-display text-base font-semibold animate-bounce pointer-events-none shadow-xl flex items-center gap-1.5 z-20">
+          <span className="text-red-500 animate-pulse">⚠️</span> Too steep! Swim for a green exit ramp.
         </div>
       )}
 
       {activeHUD.isCrowded && (
-        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-amber-950/90 border border-amber-600/50 rounded-sm text-amber-100 font-mono text-[10px] tracking-widest uppercase pointer-events-none shadow-xl flex items-center gap-1 z-20">
-          <span className="text-amber-500 animate-pulse">🏃‍♂️</span> Stuck in Herd Stampede Crowd! Speed Slowed!
+        <div className="absolute bottom-28 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-amber-950/90 border border-amber-600/50 rounded-full text-amber-100 font-display text-base font-semibold pointer-events-none shadow-xl flex items-center gap-1.5 z-20">
+          <span className="text-amber-500 animate-pulse">🏃‍♂️</span> Caught in the crush! Hop or steer clear.
         </div>
       )}
 
       {playerDeathMessage && (
         <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-inset/95 p-6 text-center select-none">
-          <div className="max-w-md bg-panel border border-red-950/40 rounded p-8 flex flex-col items-center shadow-2xl relative">
+          <div className="max-w-md bg-panel border border-red-950/40 rounded-2xl p-8 flex flex-col items-center shadow-2xl relative">
             {/* Subtle red background glow */}
             <div className="absolute -top-16 -left-16 w-32 h-32 bg-red-500/5 rounded-full blur-2xl pointer-events-none" />
 
-            <h2 className="font-display text-2xl font-light tracking-widest text-red-500 uppercase pb-2">
+            <h2 className="font-display text-3xl font-semibold text-red-400 pb-1">
               {playerDeathTitle}
             </h2>
             
@@ -2869,9 +2869,9 @@ export default function GameCanvas({
                   onGameOver('drowned');
                 }
               }}
-              className="px-8 py-3.5 rounded-sm bg-[#a34d4d] hover:bg-[#b85b5b] font-sans text-xs font-semibold tracking-[0.2em] uppercase text-white shadow-md active:scale-[0.98] transition-all cursor-pointer inline-flex items-center justify-center gap-2 border-0"
+              className="px-8 py-3 rounded-full font-display text-base font-semibold transition-all cursor-pointer inline-flex items-center justify-center gap-2 bg-[#a34d4d] hover:bg-[#b85b5b] text-white shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] border-0"
             >
-              CONTINUE
+              Continue
             </button>
           </div>
         </div>
