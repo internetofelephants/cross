@@ -21,7 +21,10 @@ import {
   playDeathDefied,
   playSelect,
   startRiverAmbiance,
-  stopRiverAmbiance
+  stopRiverAmbiance,
+  startMusic,
+  pauseMusic,
+  stopMusic
 } from '../utils/audio';
 import GameHUD from './GameHUD';
 
@@ -109,11 +112,13 @@ export default function GameCanvas({
     setupLevel();
   }, [day]);
 
-  // Manage river audio ambient only during active gameplay!
+  // River ambience and background music only during active gameplay
   useEffect(() => {
     startRiverAmbiance();
+    startMusic();
     return () => {
       stopRiverAmbiance();
+      stopMusic();
     };
   }, []);
 
@@ -2328,8 +2333,9 @@ export default function GameCanvas({
       ctx.translate(g.x, g.y);
       ctx.rotate(Math.sin((Date.now() * 0.002) + g.animOffset) * 0.2); // slight head swing animation
       
-      // Shadow
+      // Shadow (fresh path, or it joins onto the previous animal's beard stroke and draws a line between them)
       ctx.fillStyle = 'rgba(20, 28, 15, 0.3)';
+      ctx.beginPath();
       ctx.ellipse(0, 0, g.size * 1.2, g.size * 0.7, 0, 0, Math.PI * 2);
       ctx.fill();
 
@@ -2792,6 +2798,8 @@ export default function GameCanvas({
         onGuideToggle={(open) => {
           const s = stateRef.current;
           s.paused = open;
+          if (open) pauseMusic();
+          else startMusic();
           // Drop held keys so the alpha doesn't keep swimming when play resumes
           s.keys = {};
         }}

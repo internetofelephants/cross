@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Waves, Play, RefreshCw } from 'lucide-react';
+import { Play, RefreshCw, NotebookPen } from 'lucide-react';
 import { playSelect } from '../utils/audio';
 import CrossingMap, { CROSSING_NAMES } from './CrossingMap';
 import ScreenControls from './ScreenControls';
+import { FIELD_NOTES } from '../data/fieldNotes';
 
 interface DaySummaryProps {
   // The crossing about to be played; the one just finished is nextDay - 1.
@@ -22,6 +23,8 @@ export default function DaySummary({ nextDay, onNextWave, onResetGame, onPlayCro
       return () => clearTimeout(timer);
     }
   }, [isConfirmingReset]);
+
+  const fieldNote = FIELD_NOTES[nextDay];
 
   const handleStartNext = () => {
     playSelect();
@@ -44,6 +47,27 @@ export default function DaySummary({ nextDay, onNextWave, onResetGame, onPlayCro
           <ScreenControls guideId="summary-guide-btn" className="shrink-0" />
         </div>
 
+        {/* Field note for the crossing ahead, then the briefing for it */}
+        <div className="bg-panel-raised border border-line p-5 rounded-xl mb-8 space-y-3">
+          <h3 className="font-display text-xl font-semibold text-[#c2a078] flex items-center gap-2">
+            <NotebookPen className="w-5 h-5 text-[#c2a078]" />
+            Field note
+          </h3>
+          {fieldNote && (
+            <p className="text-white/70 text-[13px] leading-relaxed">
+              <strong className="font-semibold text-white">{fieldNote.headline}</strong> {fieldNote.body}
+            </p>
+          )}
+          <p className="text-white/70 text-[13px] leading-relaxed">
+            <strong className="font-display font-semibold text-[15px] text-[#c2a078]">
+              Next up: {CROSSING_NAMES[nextDay - 1]}
+            </strong>{' '}
+            — A new herd has gathered on the bank at the next crossing point. The river here is more dangerous than the
+            last. The currents are swifter, there are more crocodiles and they are more aggressive, and the herd is
+            larger. Good luck guiding them across!
+          </p>
+        </div>
+
         {/* Crossing map: crossings done so far, next one pulsing */}
         <div className="w-full mb-8 border border-line rounded-xl overflow-hidden">
           <CrossingMap
@@ -51,19 +75,6 @@ export default function DaySummary({ nextDay, onNextWave, onResetGame, onPlayCro
             justCompleted={nextDay - 1}
             onSelect={n => { playSelect(); onPlayCrossing(n); }}
           />
-        </div>
-
-        {/* River briefing */}
-        <div className="bg-panel-raised border border-line p-5 rounded-xl mb-8 space-y-3">
-          <h3 className="font-display text-xl font-semibold text-[#c2a078] flex items-center gap-2">
-            <Waves className="w-5 h-5 text-[#c2a078]" />
-            Next up: {CROSSING_NAMES[nextDay - 1]}
-          </h3>
-          <p className="text-white/70 text-[13px] leading-relaxed">
-            A new herd has gathered on the bank at the next crossing point. The river here is more dangerous than the
-            last. The currents are swifter, there are more crocodiles and they are more aggressive, and the herd is
-            larger. Good luck guiding them across!
-          </p>
         </div>
 
         {/* Continuance Action */}

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { startMenuMusic, stopMenuMusic } from './utils/audio';
 import MainMenu from './components/MainMenu';
 import TitleScreen from './components/TitleScreen';
 import GameCanvas from './components/GameCanvas';
@@ -15,6 +16,12 @@ export default function App() {
   const [showTitle, setShowTitle] = useState(true);
   // Set when the lead wildebeest dies; null after a win
   const [deathCause, setDeathCause] = useState<DeathCause | null>(null);
+
+  // Calm music everywhere except during a crossing, which has its own
+  useEffect(() => {
+    if (screen === 'playing') stopMenuMusic();
+    else startMenuMusic();
+  }, [screen]);
 
   const handleStartGame = () => {
     setDay(1);

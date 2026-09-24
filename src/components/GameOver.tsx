@@ -3,6 +3,7 @@ import { RotateCcw, Award, Sparkles } from 'lucide-react';
 import ScreenControls from './ScreenControls';
 import { playSelect } from '../utils/audio';
 import { DeathCause } from '../types';
+import { CROSSING_NAMES } from './CrossingMap';
 
 interface GameOverProps {
   dayReached: number;
@@ -12,11 +13,12 @@ interface GameOverProps {
   onNewMigration: () => void;
 }
 
+// Completes "You were ___ at <crossing>."
 const CAUSE_TEXT: Record<DeathCause, string> = {
-  eaten: 'Taken by a crocodile',
-  washed: 'Swept away by the current',
-  trampled: 'Trampled in a stampede',
-  drowned: 'Drowned from exhaustion',
+  eaten: 'taken by a crocodile',
+  washed: 'swept away by the current',
+  trampled: 'trampled in a stampede',
+  drowned: 'dragged under by exhaustion',
 };
 
 export default function GameOver({ dayReached, isVictory, deathCause, onRetryLevel, onNewMigration }: GameOverProps) {
@@ -25,7 +27,7 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
   const herds = `${finished} herd${finished === 1 ? '' : 's'}`;
 
   let titleText = "The river won this one";
-  let subtitle = "No herd made it across this time. The Mara is unforgiving.";
+  let subtitle = ""; // none when no herd made it; the sentence under the title covers it
   let badgeColor = "border-rose-500/30 text-rose-400 bg-rose-500/10";
   let grade = "Riverbank Rookie";
   
@@ -82,9 +84,20 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-[#c2a078]">
             {titleText}
           </h1>
-          <p className="text-[13px] text-white/70 leading-relaxed max-w-sm mx-auto font-sans">
-            {subtitle}
-          </p>
+          {!isVictory && (
+            <p className="text-base text-white/85 font-sans">
+              You were{' '}
+              <strong className="font-display font-semibold text-[#e07a7a]">
+                {deathCause ? CAUSE_TEXT[deathCause] : 'lost'}
+              </strong>{' '}
+              at <strong className="font-display font-semibold text-[#c2a078]">{CROSSING_NAMES[dayReached - 1]}</strong>.
+            </p>
+          )}
+          {subtitle && (
+            <p className="text-[13px] text-white/70 leading-relaxed max-w-sm mx-auto font-sans">
+              {subtitle}
+            </p>
+          )}
         </div>
 
         {/* Grade Badge */}
@@ -93,23 +106,17 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
           Rank: {grade}
         </div>
 
-        {/* Final Statistics Panel */}
-        <div className="w-full bg-panel-raised rounded-xl border border-line p-5 mb-8">
-          <div className="flex justify-between items-center text-xs font-sans">
-            <span className="text-white/60 uppercase tracking-wider text-[10px]">
-              {isVictory ? "Crossings made" : "Lost at"}
-            </span>
-            <span className="text-[#c2a078] font-display font-semibold text-base bg-[#c2a078]/10 px-3 py-0.5 border border-[#c2a078]/20 rounded-full">
-              {isVictory ? "10 / 10" : `Crossing #${dayReached}`}
-            </span>
-          </div>
-          {!isVictory && deathCause && (
-            <div className="flex justify-between items-center text-xs font-sans mt-3 pt-3 border-t border-line">
-              <span className="text-white/60 uppercase tracking-wider text-[10px]">Cause</span>
-              <span className="text-[#c96a6a] font-display font-semibold text-base">{CAUSE_TEXT[deathCause]}</span>
+        {/* Final tally after a win; a loss is summed up in the sentence under the title */}
+        {isVictory && (
+          <div className="w-full bg-panel-raised rounded-xl border border-line p-5 mb-8">
+            <div className="flex justify-between items-center text-xs font-sans">
+              <span className="text-white/60 uppercase tracking-wider text-[10px]">Crossings made</span>
+              <span className="text-[#c2a078] font-display font-semibold text-base bg-[#c2a078]/10 px-3 py-0.5 border border-[#c2a078]/20 rounded-full">
+                10 / 10
+              </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">

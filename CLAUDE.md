@@ -41,13 +41,14 @@ Each level is a new herd at a different crossing point. There are 10 crossings, 
 - `App.tsx`: screen flow (title overlay → menu → playing → summary → gameover). Internal state is still called `day` though players see "Crossing #N". Also holds `deathCause`.
 - `TitleScreen.tsx`: full-screen concept art (`src/assets/title-art.webp`, cropped to cover, pinned top-left) with a Play button. Dissolves over 1.2s into the start screen; shows only on first load.
 - `MainMenu.tsx`: start screen with intro text, the map and a "Start Crossing #1 →" button.
-- `DaySummary.tsx`: between-crossings screen: "Crossing #N: made it!", "Nice swimming", the map, a "Next up: Crossing #N" briefing (one fixed paragraph), and "Reset all" / "Into the water" buttons.
-- `GameOver.tsx`: "The river won this one" or "All ten crossings made!", with Lost at and Cause rows. Rank is based on crossings finished (Riverbank Rookie / Plains Walker / Savannah Survivor / Gnu Master).
+- `DaySummary.tsx`: between-crossings screen: "<Name>: made it!", "Nice swimming", one "Field note" card between the header line and the map (the note for the crossing ahead from `src/data/fieldNotes.ts`, crossings 2–10, then a "Next up: <Name> —" briefing paragraph), the map, and "Reset all" / "Into the water" buttons.
+- `GameOver.tsx`: "The river won this one" followed by "You were <cause> at <crossing name>." (cause in red, name in gold; wording in `CAUSE_TEXT`), or "All ten crossings made!" with a 10 / 10 tally. Rank is based on crossings finished (Riverbank Rookie / Plains Walker / Savannah Survivor / Gnu Master).
 - `GameHUD.tsx`: crossing number, Health and Stamina bars, "Hop!" button, isolation warning, and restart, reset, sound and ? buttons.
-- `GuideModal.tsx` + `src/data/guideContent.tsx`: the ? panel (on the menu, HUD and game over). Tabs: Instructions, About (credits and project story), References (empty). Grows out of the ? button, closes with Escape, click-outside or ✕, and pauses the game while open.
+- `GuideModal.tsx` + `src/data/guideContent.tsx`: the ? panel (on the menu, HUD and game over). Tabs: Instructions, About (credits and project story), References (videos, articles, papers; links always open in a new tab). Grows out of the ? button, closes with Escape, click-outside or ✕, and pauses the game while open.
 - `ScreenControls.tsx`: the sound and ? buttons (plus their `GuideModal`), placed inside the panel level with the title on the menu, between-crossings and game-over screens. The in-game HUD has its own.
 - `CrossingMap.tsx`: SVG map with 10 stepping stones. The next crossing shows a pulsing herd of cream dots, always on the top bank; any label it would cover is pushed further out. Props: `completed`, `justCompleted`, `onSelect`. With `onSelect`, clicking any stone plays that crossing (replaced debug mode). Colours in the palette object `C`. Crossing names live in `CROSSING_NAMES` (set by the user) and also appear on the between-crossings screen ("<Name>: made it!", "Next up: <Name>").
-- `src/utils/audio.ts` (sound), `src/hooks/useEscapeKey.ts`, `src/vite-env.d.ts`.
+- `src/utils/audio.ts`: synthesized sound effects, the river ambience, and two looping music tracks (`LoopTrack`, which fades in and out and retries on the first click or key press if the browser blocked autoplay). Game music (`src/assets/audio/mara-river-crossing.mp3`) plays only during a crossing: `GameCanvas` calls `startMusic`/`stopMusic` on mount/unmount and `pauseMusic` while the guide is open. Menu music (`src/assets/audio/transition-music.m4a`) plays on every other screen, driven by an effect on `screen` in `App.tsx`. Both at 0.35 volume; mute pauses both.
+- `src/hooks/useEscapeKey.ts`, `src/vite-env.d.ts`.
 
 ## Visual style
 
@@ -72,7 +73,6 @@ Each level is a new herd at a different crossing point. There are 10 crossings, 
 ## Still open
 
 - A cleaner logo file and a tagline banner (waiting on final art). A portrait crop of the title art for phones, where the logo is currently cut to "CROS".
-- References tab content (About is filled in).
 - Showing the full 10-checkmark map on the victory screen.
 - Possibly tightening the safe strip along the banks if hugging the bank becomes an easy strategy.
 - Exhaustion is effectively permanent once triggered, since stamina never refills during a crossing.

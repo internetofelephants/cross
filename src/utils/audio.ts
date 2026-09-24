@@ -1,3 +1,5 @@
+import musicUrl from '../assets/audio/mara-river-crossing.mp3';
+import transitionMusicUrl from '../assets/audio/transition-music.m4a';
 // Web Audio API Synthesizer for retro retro-safari sound effects
 let audioCtx: AudioContext | null = null;
 let isMuted = false;
@@ -174,6 +176,111 @@ export const startRiverAmbiance = () => {
   }
 };
 
+// Looping music tracks that fade in and out. A track only sounds while it is wanted and sound
+// isn't muted; browsers block playback until the player's first click or key press, so a wanted
+// track retries then.
+class LoopTrack {
+  private el: HTMLAudioElement | null = null;
+  private wanted = false;
+  private fade: ReturnType<typeof setInterval> | null = null;
+
+  constructor(private url: string, private volume: number) {}
+
+  start() {
+    this.wanted = true;
+    this.resume();
+  }
+
+  // Fade out and stop; `rewind` starts it from the top next time
+  stop(rewind: boolean) {
+    this.wanted = false;
+    if (!this.el || this.el.paused) {
+      if (this.el && rewind) this.el.currentTime = 0;
+      return;
+    }
+    const el = this.el;
+    this.fadeTo(0, () => {
+      el.pause();
+      if (rewind) el.currentTime = 0;
+    });
+  }
+
+  // Called after unmuting or on the first interaction
+  resume() {
+    if (!this.wanted || isMuted) return;
+    if (!this.el) {
+      this.el = new Audio(this.url);
+      this.el.loop = true;
+      this.el.volume = 0;
+    }
+    if (!this.el.paused && !this.fade) return;
+    this.clearFade(); // a fade-out still running would pause it again right after it restarts
+    this.el.play().then(() => { if (this.wanted) this.fadeTo(this.volume); }).catch(() => {});
+  }
+
+  mute() {
+    this.clearFade();
+    this.el?.pause();
+  }
+
+  private fadeTo(target: number, done?: () => void) {
+    this.clearFade();
+    const el = this.el!;
+    const step = (target - el.volume) / 20; // about 0.6s
+    this.fade = setInterval(() => {
+      const next = el.volume + step;
+      if ((step >= 0 && next >= target) || (step < 0 && next <= target)) {
+        el.volume = target;
+        this.clearFade();
+        done?.();
+      } else {
+        el.volume = next;
+      }
+    }, 30);
+  }
+
+  private clearFade() {
+    if (this.fade) clearInterval(this.fade);
+    this.fade = null;
+  }
+}
+
+// In-game music, only while a crossing is being played (see GameCanvas)
+const gameMusic = new LoopTrack(musicUrl, 0.35);
+// Calmer music for the title, start, between-crossings and game-over screens (see App)
+const menuMusic = new LoopTrack(transitionMusicUrl, 0.35);
+
+const unlock = () => {
+  gameMusic.resume();
+  menuMusic.resume();
+};
+if (typeof window !== 'undefined') {
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', unlock);
+}
+
+// When the dev server swaps in an edited copy of this file, the old copy's sounds would keep playing
+// with nothing left that can stop or mute them, so each copy silences the one before it.
+if (import.meta.hot) {
+  const g = globalThis as { __crossAudioCleanup?: () => void };
+  g.__crossAudioCleanup?.();
+  g.__crossAudioCleanup = () => {
+    gameMusic.mute();
+    menuMusic.mute();
+    stopRiverAmbiance();
+    window.removeEventListener('pointerdown', unlock);
+    window.removeEventListener('keydown', unlock);
+  };
+}
+
+export const startMusic = () => gameMusic.start();
+// Pause keeps the position, e.g. while the guide is open
+export const pauseMusic = () => gameMusic.stop(false);
+export const stopMusic = () => gameMusic.stop(true);
+
+export const startMenuMusic = () => menuMusic.start();
+export const stopMenuMusic = () => menuMusic.stop(true);
+
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   const ctx = getRawAudioContext();
@@ -196,7 +303,11 @@ export const toggleMute = (): boolean => {
   isMuted = !isMuted;
   if (isMuted) {
     stopRiverAmbiance();
+    gameMusic.mute();
+    menuMusic.mute();
   } else {
+    gameMusic.resume();
+    menuMusic.resume();
     const ctx = getRawAudioContext();
     if (ctx && ctx.state === 'suspended') {
       ctx.resume().then(() => startRiverAmbiance());
