@@ -118,7 +118,37 @@ export const InstructionsContent: React.FC = () => (
 
 /* ---------- About ---------- */
 
-export const AboutContent: React.FC = () => null;
+const ABOUT_PARAGRAPHS: React.ReactNode[] = [
+  <>
+    Cross is a collaboration between Nature Venture and Internet of Elephants.
+    <br />
+    Developed by Gautam Shah.
+  </>,
+  <>
+    This was my first attempt at vibe coding a game and where I started to explore what was possible and what are the
+    current limitations. Nature has millions of story lines that play out every day, and one of the most dramatic is the
+    annual crossing of wildebeest across the Mara River in search of grazing land. This has been documented thousands of
+    times on film, both long and short, but every part of it seemed perfect for a short game that tried to simulate the
+    manic energy that surrounds it, and the very real dangers that lurk.
+  </>,
+  <>
+    While the idea was mine, the game was built entirely by AI. Of course, there are many things we would love to have had
+    the help of a biologist, an illustrator, a creative director, and a game developer to get exactly right.
+  </>,
+  <>
+    What&rsquo;s exciting is that we didn&rsquo;t need a whole team of people to get started. We had an idea, some
+    curiosity, a couple of computers and a self-imposed timeline of less than a week. So that&rsquo;s what we did. And
+    we&rsquo;re pretty excited about what else we might be able to make this way.
+  </>,
+];
+
+export const AboutContent: React.FC = () => (
+  <div className="space-y-3 text-xs leading-relaxed font-sans">
+    {ABOUT_PARAGRAPHS.map((para, i) => (
+      <p key={i} className="text-white/65 leading-normal px-1">{para}</p>
+    ))}
+  </div>
+);
 
 /* ---------- References ---------- */
 
