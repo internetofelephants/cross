@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Waves, Play, RefreshCw } from 'lucide-react';
 import { playSelect } from '../utils/audio';
-import CrossingMap from './CrossingMap';
+import CrossingMap, { CROSSING_NAMES } from './CrossingMap';
+import ScreenControls from './ScreenControls';
 
 interface DaySummaryProps {
   // The crossing about to be played; the one just finished is nextDay - 1.
@@ -34,11 +35,13 @@ export default function DaySummary({ nextDay, onNextWave, onResetGame, onPlayCro
         <div className="absolute top-0 right-0 w-80 h-80 bg-[#c2a078]/5 rounded-full blur-[80px] pointer-events-none" />
 
         {/* Level Stats Summary */}
-        <div className="text-center md:text-left md:flex justify-between items-end border-b border-line pb-6 mb-8 gap-4">
+        <div className="flex justify-between items-end border-b border-line pb-6 mb-8 gap-4">
           <div>
-            <span className="text-[#c2a078] text-sm font-semibold">Crossing #{nextDay - 1}: made it!</span>
+            <span className="text-[#c2a078] text-sm font-semibold">{CROSSING_NAMES[nextDay - 2]}: made it!</span>
             <h2 className="font-display text-3xl md:text-4xl font-semibold text-white mt-1">Nice swimming</h2>
           </div>
+          {/* Sound and guide, level with the title */}
+          <ScreenControls guideId="summary-guide-btn" className="shrink-0" />
         </div>
 
         {/* Crossing map: crossings done so far, next one pulsing */}
@@ -54,7 +57,7 @@ export default function DaySummary({ nextDay, onNextWave, onResetGame, onPlayCro
         <div className="bg-panel-raised border border-line p-5 rounded-xl mb-8 space-y-3">
           <h3 className="font-display text-xl font-semibold text-[#c2a078] flex items-center gap-2">
             <Waves className="w-5 h-5 text-[#c2a078]" />
-            Next up: Crossing #{nextDay}
+            Next up: {CROSSING_NAMES[nextDay - 1]}
           </h3>
           <p className="text-white/70 text-[13px] leading-relaxed">
             A new herd has gathered on the bank at the next crossing point. The river here is more dangerous than the

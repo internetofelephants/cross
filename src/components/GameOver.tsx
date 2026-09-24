@@ -1,7 +1,7 @@
 import React from 'react';
-import { Skull, RotateCcw, Award, Volume2, VolumeX, Sparkles, HelpCircle } from 'lucide-react';
-import GuideModal from './GuideModal';
-import { playSelect, toggleMute, getMuteStatus } from '../utils/audio';
+import { RotateCcw, Award, Sparkles } from 'lucide-react';
+import ScreenControls from './ScreenControls';
+import { playSelect } from '../utils/audio';
 import { DeathCause } from '../types';
 
 interface GameOverProps {
@@ -20,15 +20,6 @@ const CAUSE_TEXT: Record<DeathCause, string> = {
 };
 
 export default function GameOver({ dayReached, isVictory, deathCause, onRetryLevel, onNewMigration }: GameOverProps) {
-  const [muted, setMuted] = React.useState(getMuteStatus());
-  const [guideOpen, setGuideOpen] = React.useState(false);
-
-  const handleMuteToggle = () => {
-    const isMutedNow = toggleMute();
-    setMuted(isMutedNow);
-    playSelect();
-  };
-
   // Rank on the crossings actually finished, not the one that was lost
   const finished = isVictory ? 10 : dayReached - 1;
   const herds = `${finished} herd${finished === 1 ? '' : 's'}`;
@@ -69,38 +60,26 @@ export default function GameOver({ dayReached, isVictory, deathCause, onRetryLev
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen screen-glow p-6 select-none text-[#e5e5e5]">
-      <div className="absolute top-10 right-10 z-10 flex gap-2">
-        <button
-          onClick={handleMuteToggle}
-          className="p-3 rounded-full bg-panel border border-line hover:border-[#c2a078]/50 hover:bg-panel-raised text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
-          title={muted ? "Unmute sounds" : "Mute sounds"}
-        >
-          {muted ? <VolumeX className="w-5 h-5 text-neutral-500" /> : <Volume2 className="w-5 h-5 text-[#c2a078]" />}
-        </button>
-        <button
-          id="gameover-guide-btn"
-          onClick={() => { playSelect(); setGuideOpen(true); }}
-          className="p-3 rounded-full bg-panel border border-line hover:border-[#c2a078]/50 hover:bg-panel-raised text-[#c2a078] transition-colors cursor-pointer flex items-center justify-center"
-          title="Help & Information"
-        >
-          <HelpCircle className="w-5 h-5" />
-        </button>
-      </div>
-
-      <GuideModal isOpen={guideOpen} originId="gameover-guide-btn" onClose={() => setGuideOpen(false)} />
-
-      <div className="relative w-full max-w-xl bg-panel border border-line rounded-2xl overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
+      <div className="relative w-full max-w-2xl bg-panel border border-line rounded-2xl overflow-hidden shadow-2xl p-8 md:p-12 flex flex-col items-center">
         {/* Subtle background light */}
         <div className="absolute -top-32 -left-32 w-64 h-64 bg-[#c2a078]/5 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Skull or Sparkles Icon */}
-        <div className={`p-4 bg-inset border border-line rounded-2xl mb-6 relative ${isVictory ? 'text-[#c2a078]' : 'text-[#a34d4d]'}`}>
-          {isVictory ? <Sparkles className="w-12 h-12" /> : <Skull className="w-12 h-12" />}
-        </div>
+        {/* Sound and guide: on their own row on phones, otherwise level with the top line (the sparkles
+            after a win, the title otherwise) */}
+        <ScreenControls
+          guideId="gameover-guide-btn"
+          className={`self-end -mt-3 mb-3 md:m-0 md:absolute md:right-8 md:top-12 ${isVictory ? '' : 'md:h-10 md:items-center'}`}
+        />
+
+        {isVictory && (
+          <div className="p-4 bg-inset border border-line rounded-2xl mb-6 relative text-[#c2a078]">
+            <Sparkles className="w-12 h-12" />
+          </div>
+        )}
 
         {/* Title & Comment */}
         <div className="text-center space-y-3 mb-8">
-          <h1 className="font-display text-3xl md:text-4xl font-semibold text-[#c2a078]">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-[#c2a078]">
             {titleText}
           </h1>
           <p className="text-[13px] text-white/70 leading-relaxed max-w-sm mx-auto font-sans">

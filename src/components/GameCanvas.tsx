@@ -24,7 +24,6 @@ import {
   stopRiverAmbiance
 } from '../utils/audio';
 import GameHUD from './GameHUD';
-import { Skull } from 'lucide-react';
 
 // River current rises evenly from Day 1 to Day 10. Day 10 matches the old Day 8 current, which was already
 // about as strong as the alpha can swim against.

@@ -45,7 +45,8 @@ Each level is a new herd at a different crossing point. There are 10 crossings, 
 - `GameOver.tsx`: "The river won this one" or "All ten crossings made!", with Lost at and Cause rows. Rank is based on crossings finished (Riverbank Rookie / Plains Walker / Savannah Survivor / Gnu Master).
 - `GameHUD.tsx`: crossing number, Health and Stamina bars, "Hop!" button, isolation warning, and restart, reset, sound and ? buttons.
 - `GuideModal.tsx` + `src/data/guideContent.tsx`: the ? panel (on the menu, HUD and game over). Tabs: Instructions, About (credits and project story), References (empty). Grows out of the ? button, closes with Escape, click-outside or ✕, and pauses the game while open.
-- `CrossingMap.tsx`: SVG map with 10 stepping stones. Props: `completed`, `justCompleted`, `onSelect`. With `onSelect`, clicking any stone plays that crossing (replaced debug mode). Colours in the palette object `C`. Names in `CROSSING_NAMES` are unverified.
+- `ScreenControls.tsx`: the sound and ? buttons (plus their `GuideModal`), placed inside the panel level with the title on the menu, between-crossings and game-over screens. The in-game HUD has its own.
+- `CrossingMap.tsx`: SVG map with 10 stepping stones. The next crossing shows a pulsing herd of cream dots, always on the top bank; any label it would cover is pushed further out. Props: `completed`, `justCompleted`, `onSelect`. With `onSelect`, clicking any stone plays that crossing (replaced debug mode). Colours in the palette object `C`. Crossing names live in `CROSSING_NAMES` (set by the user) and also appear on the between-crossings screen ("<Name>: made it!", "Next up: <Name>").
 - `src/utils/audio.ts` (sound), `src/hooks/useEscapeKey.ts`, `src/vite-env.d.ts`.
 
 ## Visual style
@@ -72,7 +73,6 @@ Each level is a new herd at a different crossing point. There are 10 crossings, 
 
 - A cleaner logo file and a tagline banner (waiting on final art). A portrait crop of the title art for phones, where the logo is currently cut to "CROS".
 - References tab content (About is filled in).
-- Checking the crossing names in `CROSSING_NAMES`.
 - Showing the full 10-checkmark map on the victory screen.
 - Possibly tightening the safe strip along the banks if hugging the bank becomes an easy strategy.
 - Exhaustion is effectively permanent once triggered, since stamina never refills during a crossing.

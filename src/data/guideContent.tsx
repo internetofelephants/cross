@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flag, Navigation, Heart, Footprints, Zap, Users, Skull } from 'lucide-react';
+import { Flag, Navigation, Heart, Footprints, Zap, Users, TriangleAlert } from 'lucide-react';
 
 /* ---------- Instructions ---------- */
 
@@ -90,7 +90,7 @@ const INSTRUCTIONS: InstructionCard[] = [
     ),
   },
   {
-    icon: <Skull className="w-4 h-4" />,
+    icon: <TriangleAlert className="w-4 h-4" />,
     title: 'Crocodiles',
     body: (
       <>
