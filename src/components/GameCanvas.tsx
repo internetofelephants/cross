@@ -15,10 +15,8 @@ import {
   playSplash, 
   playChomp, 
   playSprint, 
-  playStoneThrow, 
   playCrossSuccess, 
   playCrocStun, 
-  playDeathDefied,
   playSelect,
   startRiverAmbiance,
   stopRiverAmbiance,
@@ -767,7 +765,6 @@ export default function GameCanvas({
         // HUGE SPLASH LANDING!
         createSplashParticles(alpha.x, alpha.y, 16, 2.2, '#ffffff');
         createSplashParticles(alpha.x, alpha.y, 10, 1.5, '#a2c2e8');
-        playSplash(); // splash sound
       }
     }
     if (alpha.hopCooldown && alpha.hopCooldown > 0) alpha.hopCooldown--;
@@ -809,7 +806,7 @@ export default function GameCanvas({
       alpha.hopAirTime = 18;
       alpha.hopCooldown = 40;
       alpha.stamina = Math.max(0, alpha.stamina - 15); // lowered from 22% for better crossing balance
-      playSplash(); // plays jump splash sound
+      playSplash(); // the alpha's hop splashes; other hops in the water are silent
       createSplashParticles(alpha.x, alpha.y, 8, 1.8);
     }
 
@@ -1213,11 +1210,7 @@ export default function GameCanvas({
           f.hopAirTime = 18;
           f.hopCooldown = 50 + Math.random() * 30; // randomized cooldown to prevent synchronized pulsating
           f.stamina = Math.max(0, f.stamina - 12);
-          if (isSwim) {
-            playSplash();
-          } else {
-            playSprint();
-          }
+          if (!isSwim) playSprint(); // hops in the water are silent; the splash is only for diving in
           createSplashParticles(f.x, f.y, 6, 1.3, '#ffffff');
 
           // Push nearby herd members away when they hop to relieve crowding!
@@ -1291,7 +1284,6 @@ export default function GameCanvas({
           // HUGE SPLASH LANDING!
           createSplashParticles(f.x, f.y, 14, 2.0, '#ffffff');
           createSplashParticles(f.x, f.y, 8, 1.4, '#a2c2e8');
-          playSplash(); // splash sound
         }
       } else {
         if (fIsResting) {
@@ -1335,6 +1327,7 @@ export default function GameCanvas({
         f.hopCooldown = 50 + Math.random() * 45;
         f.vx = Math.max(f.vx, 3.8); // give substantial forward jump/dive impulse
         createSplashParticles(220, f.y, 12, 1.8, '#ffffff');
+        playSplash();
       }
 
       // Block Right Bank steep cliffs progress outside of exit zones OR due to bottleneck clogging
@@ -1513,7 +1506,6 @@ export default function GameCanvas({
           // HUGE SPLASH LANDING!
           createSplashParticles(w.x, w.y, 14, 2.0, '#ffffff');
           createSplashParticles(w.x, w.y, 8, 1.4, '#a2c2e8');
-          playSplash(); // splash sound
         }
       }
       if (w.hopCooldown && w.hopCooldown > 0) w.hopCooldown--;
@@ -1588,11 +1580,7 @@ export default function GameCanvas({
           w.hopAirTime = 18;
           w.hopCooldown = 50 + Math.random() * 30;
           w.stamina = Math.max(0, w.stamina - 12);
-          if (inRiver) {
-            playSplash();
-          } else {
-            playSprint();
-          }
+          if (!inRiver) playSprint(); // hops in the water are silent; the splash is only for diving in
           createSplashParticles(w.x, w.y, 6, 1.3, '#ffffff');
 
           // Push nearby ones away
@@ -1638,6 +1626,7 @@ export default function GameCanvas({
         w.hopCooldown = 50 + Math.random() * 45;
         w.vx = Math.max(w.vx, 3.8); // give substantial forward jump/dive impulse
         createSplashParticles(220, w.y, 11, 2.0, '#ffffff');
+        playSplash();
       }
 
       // Block Right Bank steep cliffs progress outside of exit zones for ambient wildebeests too!

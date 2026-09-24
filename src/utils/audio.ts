@@ -178,13 +178,15 @@ export const startRiverAmbiance = () => {
 
 // Looping music tracks that fade in and out. A track only sounds while it is wanted and sound
 // isn't muted; browsers block playback until the player's first click or key press, so a wanted
-// track retries then.
+// track retries then. `tailFade` fades each pass out over its last that-many seconds, so the jump
+// back to the start of the loop isn't abrupt.
 class LoopTrack {
   private el: HTMLAudioElement | null = null;
   private wanted = false;
   private fade: ReturnType<typeof setInterval> | null = null;
+  private level = 0; // fade in/out level; the element's volume is this times the tail fade
 
-  constructor(private url: string, private volume: number) {}
+  constructor(private url: string, private volume: number, private tailFade = 0) {}
 
   start() {
     this.wanted = true;
@@ -212,6 +214,7 @@ class LoopTrack {
       this.el = new Audio(this.url);
       this.el.loop = true;
       this.el.volume = 0;
+      if (this.tailFade > 0) this.el.addEventListener('timeupdate', () => this.applyVolume());
     }
     if (!this.el.paused && !this.fade) return;
     this.clearFade(); // a fade-out still running would pause it again right after it restarts
@@ -223,18 +226,28 @@ class LoopTrack {
     this.el?.pause();
   }
 
+  private applyVolume() {
+    const el = this.el!;
+    let tail = 1;
+    if (this.tailFade > 0 && el.duration) {
+      tail = Math.min(1, Math.max(0, (el.duration - el.currentTime) / this.tailFade));
+    }
+    el.volume = this.level * tail;
+  }
+
   private fadeTo(target: number, done?: () => void) {
     this.clearFade();
-    const el = this.el!;
-    const step = (target - el.volume) / 20; // about 0.6s
+    const step = (target - this.level) / 20; // about 0.6s
     this.fade = setInterval(() => {
-      const next = el.volume + step;
+      const next = this.level + step;
       if ((step >= 0 && next >= target) || (step < 0 && next <= target)) {
-        el.volume = target;
+        this.level = target;
+        this.applyVolume();
         this.clearFade();
         done?.();
       } else {
-        el.volume = next;
+        this.level = next;
+        this.applyVolume();
       }
     }, 30);
   }
@@ -248,7 +261,8 @@ class LoopTrack {
 // In-game music, only while a crossing is being played (see GameCanvas)
 const gameMusic = new LoopTrack(musicUrl, 0.35);
 // Calmer music for the title, start, between-crossings and game-over screens (see App)
-const menuMusic = new LoopTrack(transitionMusicUrl, 0.35);
+// fading out over the last 10 seconds of each pass
+const menuMusic = new LoopTrack(transitionMusicUrl, 0.35, 10);
 
 const unlock = () => {
   gameMusic.resume();
@@ -327,31 +341,38 @@ export const playSelect = () => {
   const ctx = getAudioContext();
   if (!ctx) return;
 
-  const osc = ctx.createOscillator();
+  // Soft rounded "pip": a gentle upward blip with a quiet octave on top, a few ms of attack so it
+  // doesn't click, and a quick fade
+  const now = ctx.currentTime;
   const gain = ctx.createGain();
-  
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(300, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.1);
-  
-  gain.gain.setValueAtTime(0.1, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-  
-  osc.connect(gain);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.07, now + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.14);
   gain.connect(ctx.destination);
-  
-  osc.start();
-  osc.stop(ctx.currentTime + 0.1);
+
+  [{ freq: 523, level: 1 }, { freq: 1046, level: 0.25 }].forEach(({ freq, level }) => {
+    const osc = ctx.createOscillator();
+    const oscGain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * 0.85, now);
+    osc.frequency.exponentialRampToValueAtTime(freq, now + 0.03);
+    oscGain.gain.value = level;
+    osc.connect(oscGain);
+    oscGain.connect(gain);
+    osc.start(now);
+    osc.stop(now + 0.15);
+  });
 };
 
-export const playSplash = (volumeMultiplier = 1.0) => {
+// `useRecording` false skips jump.mp3 and plays the generated splash (used by the sound test page)
+export const playSplash = (volumeMultiplier = 1.0, useRecording = true) => {
   if (isMuted) return;
   
   const ctx = getAudioContext();
   if (!ctx) return;
 
   // Try custom loaded sound first (via efficient decoded Web Audio buffer)
-  if (customSplashBuffer) {
+  if (customSplashBuffer && useRecording) {
     try {
       const source = ctx.createBufferSource();
       source.buffer = customSplashBuffer;
@@ -505,29 +526,6 @@ export const playSprint = () => {
   osc.stop(ctx.currentTime + 0.15);
 };
 
-export const playStoneThrow = () => {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  // High to low water plop
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(600, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.25);
-  
-  gain.gain.setValueAtTime(0.2, ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-  
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  
-  osc.start();
-  osc.stop(ctx.currentTime + 0.25);
-};
-
 export const playCrossSuccess = () => {
   if (isMuted) return;
   const ctx = getAudioContext();
@@ -588,26 +586,4 @@ export const playCrocStun = () => {
   
   mod.stop(ctx.currentTime + 0.6);
   osc.stop(ctx.currentTime + 0.6);
-};
-
-export const playDeathDefied = () => {
-  if (isMuted) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  // Quick panic slide
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(100, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.3);
-  
-  gain.gain.setValueAtTime(0.1, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-  
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start();
-  osc.stop(ctx.currentTime + 0.3);
 };
